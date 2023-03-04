@@ -66,9 +66,9 @@ struct ppa { /* kuo */
             uint64_t ch  : CH_BITS;
             uint64_t rsv : 1;
         } g;
-
         uint64_t ppa;
     };
+    TAILQ_ENTRY(ppa) next;
 };
 
 struct write_pointer_table {
@@ -94,11 +94,19 @@ struct nand_subblock { /* kuo */
     int vpc; /* valid page count */
     int erase_cnt;
     int wp; /* current write pointer */
+    int was_full;
 };
 
 struct nand_block { /* kuo */
     struct nand_subblock *subblk;
     int nsubblks;
+    int invalid_sublk;
+    
+    int ch;
+    int lun;
+    int pl;
+    int blk;
+    int pos;
 };
 
 struct nand_plane {
@@ -173,6 +181,15 @@ struct ssdparams {
     int tt_pls;       /* total # of planes in the SSD */
 
     int tt_luns;      /* total # of LUNs in the SSD */
+
+    
+    /* sublk gc */
+    int valid_page;
+    int invalid_page;
+
+    double sublk_gc_thres_percent;
+    int sublk_gc_thres_pgs;
+
 };
 
 typedef struct line {
@@ -214,6 +231,24 @@ struct nand_cmd {
     int cmd;
     int64_t stime; /* Coperd: request arrival time */
 };
+
+struct node{
+    struct nand_block *blk;
+    struct node *next;
+};
+
+struct link
+{
+    int id;
+    struct node *head;
+    struct node *tail;
+};
+
+struct Finder{
+    int size; // How many subblock
+    struct link **list;
+};
+
 
 struct ssd {
     char *ssdname;
