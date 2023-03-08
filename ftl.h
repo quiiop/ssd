@@ -45,8 +45,7 @@ enum {
 };
 
 
-#define BLK_BITS    (8)
-#define SUBBLK_BITS (8) /* kuo */
+#define BLK_BITS    (16)
 #define PG_BITS     (16)
 #define SEC_BITS    (8)
 #define PL_BITS     (8)
@@ -54,12 +53,11 @@ enum {
 #define CH_BITS     (7)
 
 /* describe a physical page addr */
-struct ppa { /* kuo */
+struct ppa {
     union {
         struct {
             uint64_t blk : BLK_BITS;
             uint64_t pg  : PG_BITS;
-            uint64_t subblk : SUBBLK_BITS;
             uint64_t sec : SEC_BITS;
             uint64_t pl  : PL_BITS;
             uint64_t lun : LUN_BITS;
@@ -87,18 +85,13 @@ struct nand_page {
     int status;
 };
 
-struct nand_subblock { /* kuo */
+struct nand_block {
     struct nand_page *pg;
     int npgs;
     int ipc; /* invalid page count */
     int vpc; /* valid page count */
     int erase_cnt;
     int wp; /* current write pointer */
-};
-
-struct nand_block { /* kuo */
-    struct nand_subblock *subblk;
-    int nsubblks;
 };
 
 struct nand_plane {
@@ -125,10 +118,6 @@ struct ssd_channel {
 struct ssdparams {
     int secsz;        /* sector size in bytes */
     int secs_per_pg;  /* # of sectors per page */
-
-    int pgs_per_subblk; /* kuo */
-    int subblks_per_blk; /* kuo */
-    
     int pgs_per_blk;  /* # of NAND pages per block */
     int blks_per_pl;  /* # of blocks per plane */
     int pls_per_lun;  /* # of planes per LUN (Die) */
@@ -182,7 +171,6 @@ typedef struct line {
     QTAILQ_ENTRY(line) entry; /* in either {free,victim,full} list */
     /* position in the priority queue for victim lines */
     size_t                  pos;
-    bool was_line_in_victim_pq; // all page have valid or invalid one of them
 } line;
 
 /* wp: record next write addr */
@@ -191,7 +179,6 @@ struct write_pointer {
     int ch;
     int lun;
     int pg;
-    int subblk; /* kuo */
     int blk;
     int pl;
 };
