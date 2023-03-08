@@ -22,6 +22,7 @@ const char* fileName16 = "add_link.txt";
 const char* fileName17 = "mark_pg_invalid.txt";
 const char* fileName18 = "Finder_record.txt";
 const char* fileName19 = "vic_node.txt";
+const char* fileName20 = "log.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -42,6 +43,7 @@ FILE *outfile16 = NULL;
 FILE *outfile17 = NULL;
 FILE *outfile18 = NULL;
 FILE *outfile19 = NULL;
+FILE *outfile20 = NULL;
 
 //#define FEMU_DEBUG_FTL
 
@@ -67,7 +69,7 @@ struct ppa_queue *Empty_page_queue = NULL;
 static struct Finder *finder;
 static int tt_ipc =0;
 static int tt_vpc =0;
-static int test_count=0;
+//static int test_count=0;
 
 static void *ftl_thread(void *arg);
 
@@ -459,7 +461,7 @@ static void ssd_init_params(struct ssdparams *spp)
     /* sublk */
     spp->valid_page = 0;
     spp->invalid_page = 0;
-    spp->sublk_gc_thres_percent = 0.9;
+    spp->sublk_gc_thres_percent = 0.7;
     spp->sublk_gc_thres_pgs = (int)( (1 - spp->sublk_gc_thres_percent) * spp->tt_pgs);
 
     check_params(spp);
@@ -584,6 +586,7 @@ static void init_Empty_page_queue(struct ssdparams *spp) {
     int chs = spp->nchs;
    
     
+    /*
     for (int page=0; page<pages; page++){
         for (int sublk=0; sublk<sublks; sublk++){
             for (int blk=0; blk<blks; blk++){
@@ -605,7 +608,27 @@ static void init_Empty_page_queue(struct ssdparams *spp) {
             }
         }
     }
+    */
+   for (int blk=0; blk<blks; blk++){
+        for (int sublk=0; sublk<sublks; sublk++){
+            for (int page=0; page<pages; page++){
+                for (int lun=0; lun<luns; lun++){
+                    for (int ch=0; ch<chs; ch++){
 
+                        struct ppa *ppa = malloc(sizeof(struct ppa));
+                        ppa->g.pg = page;
+                        ppa->g.subblk = sublk;
+                        ppa->g.blk = blk;
+                        ppa->g.pl = 0;
+                        ppa->g.lun = lun;
+                        ppa->g.ch = ch;
+
+                        TAILQ_INSERT_TAIL(Empty_page_queue, ppa, next);
+                    }
+                }
+            }
+        }
+   }
     // page_record(Empty_page_queue);
 }
 
@@ -632,7 +655,7 @@ static struct node* init_node(struct nand_block *blk)
     struct node *n = malloc(sizeof(struct node));
     n->blk = blk;
     n->next = NULL;
-    printf("630 node \n");
+    // printf("630 node \n");
     return n;
 }
 
@@ -656,7 +679,7 @@ static void init_Finder(int size) {
 static void print_link(struct link *list, FILE *temp){ 
     struct node *current = list->head;
     current = list->head;
-    printf("659\n");
+    // printf("659\n");
     fprintf(temp, "Link id %d : ", list->id);
 
     if (list->head == NULL){
@@ -670,16 +693,17 @@ static void print_link(struct link *list, FILE *temp){
             current = current->next;
         }
         fprintf(temp, "[ Block id %d , addr %p ] -> NULL\n", current->blk->blk, current->blk);
-        fprintf(temp, "---------------------------\n");
+        // fprintf(temp, "---------------------------\n");
     }
 }
 
 static void Finder_record(FILE *temp) {
-    printf("678\n");
+    // printf("678\n");
     fprintf(temp, "Finder Record :\n");
     for (int i=0; i<16; i++){
         print_link(finder->list[i], temp);
     }
+    fprintf(temp, " \n");
 }
 
 
@@ -750,35 +774,33 @@ static void add_Finder(struct nand_block *blk, int pos){
     
     //int last_pos = pos-1;
     //int result;
-    printf("add Finder, pos= %d\n", pos);
+    // printf("add Finder, pos= %d\n", pos);
+    fprintf(outfile17, "blk %p add Finder, pos= %d\n", blk, blk->pos);
     if (pos == 0){ // block first time add Finder
         struct node *n = init_node(blk);
-        printf("744 \n");
+        // printf("744 \n");
         add_link(finder->list[pos], n);
-        printf("746 \n");
+        // printf("746 \n");
     }else{
         struct node **target = malloc(sizeof(struct node *));
         struct node *n;
         int last_pos = pos-1;
 
-        printf("751 \n");
+        // printf("751 \n");
         from_link_get_node(finder->list[last_pos], blk, target);
-        printf("754 \n");
+        // printf("754 \n");
         n = *target;
-        printf("756 \n");
+        // printf("756 \n");
         add_link(finder->list[pos], n);
-        printf("758 \n");
+        // printf("758 \n");
     }
     
 }
 
 static struct node* get_victim_node_from_Finder(void){
     struct node *victim_node = NULL;
-    //struct node **target;
-    //struct node *n;
     int pos = -1;
 
-    printf("781\n");
     for (int i=finder->size-1; i>=0; i--){
         if (finder->list[i]->head != NULL){
             pos = i;
@@ -791,9 +813,8 @@ static struct node* get_victim_node_from_Finder(void){
         fprintf(outfile9, "err Finder is empty\n");
         return NULL;
     }else{
-        printf("793\n");
         victim_node = get_victim_node(finder->list[pos]);
-        printf("795 \n");
+        fprintf(outfile9, "GC from link %d , victim blk %p\n", pos, victim_node->blk);
         return victim_node;
     }
 }
@@ -833,6 +854,11 @@ void ssd_init(FemuCtrl *n)
     init_Finder(nsublks);
     fclose(outfile15);
 
+    outfile20 = fopen(fileName20, "wb");
+    fprintf(outfile20, "ssd tt pg %d , gc thres pg %d\n",ssd->sp.tt_pgs ,ssd->sp.sublk_gc_thres_pgs);
+    fprintf(outfile20, "ssd tt_blks %d , tt_luns %d , tt chs %d\n",ssd->sp.tt_blks , ssd->sp.tt_luns, ssd->sp.nchs);
+    fprintf(outfile20, "ssd pgs_per_pl %d , pgs_per_lun %d , pgs_per_ch %d\n",ssd->sp.pgs_per_pl , ssd->sp.pgs_per_lun, ssd->sp.pgs_per_ch);
+    fclose(outfile20);
 
     // initialize ssd trim cnt table 
     ssd->trim_table = g_malloc0(sizeof(struct trim_table) * spp->tt_pgs);
@@ -1020,7 +1046,7 @@ static void mark_page_invalid(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
     ssd->sp.valid_page--;
     tt_vpc = tt_vpc -1;
     
-    printf("1021\n");
+    // printf("1021\n");
     /* update corresponding block status */ 
     subblk = get_subblk(ssd, ppa);
     ftl_assert(subblk->ipc >= 0 && subblk->ipc < spp->pgs_per_subblk);
@@ -1028,28 +1054,29 @@ static void mark_page_invalid(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
 
     ftl_assert(subblk->vpc > 0 && subblk->vpc <= spp->pgs_per_subblk);
     subblk->vpc = subblk->vpc -1;
-    fprintf(outfile17, "mark page invalid , sublk %p\n", subblk);
-
     int sublk_total_page = subblk->ipc + subblk->vpc; 
-    fprintf(outfile17, "ch %d , lun %d , pl %d , blk %d , sublk %d , pg %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl, ppa->g.blk, ppa->g.subblk, ppa->g.pg);
-    fprintf(outfile17, "ipc %d vpc %d tt %d \n", subblk->ipc, subblk->vpc, sublk_total_page);
-    fprintf(outfile17, "------------------\n");
-
     // printf("mark page invalid , sublk %p\n", subblk);
     // printf("ch %d , lun %d , pl %d , blk %d , sublk %d , pg %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl, ppa->g.blk, ppa->g.subblk, ppa->g.pg);
     // printf("ipc %d vpc %d tt %d \n", subblk->ipc, subblk->vpc, sublk_total_page);
     // printf("blk invalid sublk %d\n", blk->invalid_sublk);
     // printf("------------------\n");
-    fprintf(outfile17, "mark page invalid , sublk %p\n", subblk);
-    fprintf(outfile17, "ch %d , lun %d , pl %d , blk %d , sublk %d , pg %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl, ppa->g.blk, ppa->g.subblk, ppa->g.pg);
-    fprintf(outfile17, "ipc %d vpc %d tt %d \n", subblk->ipc, subblk->vpc, sublk_total_page);
-    fprintf(outfile17, "blk invalid sublk %d\n", blk->invalid_sublk);
-    fprintf(outfile17, "------------------\n");
+
+    if (req->cmd.opcode == NVME_CMD_DSM){
+        fprintf(outfile17, "Trim mark page invalid , sublk %p\n", subblk);
+        fprintf(outfile17, "ch %d , lun %d , pl %d , blk %d , sublk %d , pg %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl, ppa->g.blk, ppa->g.subblk, ppa->g.pg);
+        fprintf(outfile17, "ipc %d vpc %d tt %d \n", subblk->ipc, subblk->vpc, sublk_total_page);
+        fprintf(outfile17, "blk invalid sublk %d\n", blk->invalid_sublk);
+    }else{
+        fprintf(outfile17, "mark page invalid , sublk %p\n", subblk);
+        fprintf(outfile17, "ch %d , lun %d , pl %d , blk %d , sublk %d , pg %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl, ppa->g.blk, ppa->g.subblk, ppa->g.pg);
+        fprintf(outfile17, "ipc %d vpc %d tt %d \n", subblk->ipc, subblk->vpc, sublk_total_page);
+        fprintf(outfile17, "blk invalid sublk %d\n", blk->invalid_sublk);
+    }
 
     // sublk add Finder , if need
     if (sublk_total_page == spp->pgs_per_subblk){
         //printf("1044 sublk  ipc %d , vpc %d\n", subblk->ipc, subblk->vpc);
-        fprintf(outfile17, "1044 sublk  ipc %d , vpc %d\n", subblk->ipc, subblk->vpc);
+        fprintf(outfile17, "1044 sublk %p,  ipc %d , vpc %d\n", subblk, subblk->ipc, subblk->vpc);
         
         if (subblk->ipc >= 10){
             // struct nand_block *blk = get_blk(ssd, ppa);
@@ -1063,13 +1090,11 @@ static void mark_page_invalid(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
                 }
             }
             blk->invalid_sublk = count;
-            //printf("1060 blk pos %d , invalid sublk %d\n", blk->pos, blk->invalid_sublk);
-            //printf("------------------\n");
-            fprintf(outfile17, "1060 blk pos %d , invalid sublk %d\n", blk->pos, blk->invalid_sublk);
-            fprintf(outfile17, "------------------\n");
+            int temp = blk->invalid_sublk -1;
+            fprintf(outfile17, "1060 blk pos %d , invalid sublk %d , temp %d\n", blk->pos, blk->invalid_sublk, temp);
 
-            if (blk->pos == blk->invalid_sublk){
-
+            if (blk->pos == temp){
+                /*continus*/
             }else{
                 blk->ch = ppa->g.ch;
                 blk->lun = ppa->g.lun;
@@ -1082,6 +1107,7 @@ static void mark_page_invalid(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
             }
         }
     }
+    fprintf(outfile17, "------------------\n");
 }
 
 static void mark_page_valid(struct ssd *ssd, struct ppa *ppa)
@@ -1091,7 +1117,7 @@ static void mark_page_valid(struct ssd *ssd, struct ppa *ppa)
     struct ssdparams *spp = &ssd->sp;
     struct nand_block *blk = get_blk(ssd, ppa);
     // struct line *line;
-    printf("1073\n");
+    // printf("1073\n");
 
     /* update page status */
     pg = get_pg(ssd, ppa);
@@ -1104,22 +1130,15 @@ static void mark_page_valid(struct ssd *ssd, struct ppa *ppa)
     ftl_assert(subblk->vpc >= 0 && subblk->vpc < ssd->sp.pgs_per_subblk);
     subblk->vpc = subblk->vpc +1;
 
-    fprintf(outfile17, "mark page valid , sublk %p\n", subblk);
     int sublk_total_page = subblk->ipc + subblk->vpc; 
+    fprintf(outfile17, "mark page valid , sublk %p\n", subblk);
     fprintf(outfile17, "ch %d , lun %d , pl %d , blk %d , sublk %d , pg %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl, ppa->g.blk, ppa->g.subblk, ppa->g.pg);
     fprintf(outfile17, "ipc %d vpc %d tt %d \n", subblk->ipc, subblk->vpc, sublk_total_page);
-    fprintf(outfile17, "------------------\n");
-
-    // printf("mark page invalid , sublk %p\n", subblk);
-    // printf("ch %d , lun %d , pl %d , blk %d , sublk %d , pg %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl, ppa->g.blk, ppa->g.subblk, ppa->g.pg);
-    // printf("ipc %d vpc %d tt %d \n", subblk->ipc, subblk->vpc, sublk_total_page);
-    // printf("blk invalid sublk %d\n", blk->invalid_sublk);
-    // printf("------------------\n");
 
     // sublk add Finder , if need
     if (sublk_total_page == spp->pgs_per_subblk){
         // printf("1037 sublk full %d\n", subblk->ipc);
-        fprintf(outfile17, "1037 sublk full %d\n", subblk->ipc);
+        fprintf(outfile17, "1113 sublk %p,  ipc %d , vpc %d\n", subblk, subblk->ipc, subblk->vpc);
 
         if (subblk->ipc >= 10){
             // struct nand_block *blk = get_blk(ssd, ppa);
@@ -1133,13 +1152,11 @@ static void mark_page_valid(struct ssd *ssd, struct ppa *ppa)
                 }
             }
             blk->invalid_sublk = count;
-            // printf("1060 blk pos %d , invalid sublk %d\n", blk->pos, blk->invalid_sublk);
-            // printf("------------------\n");
-            fprintf(outfile17, "1060 blk pos %d , invalid sublk %d\n", blk->pos, blk->invalid_sublk);
-            fprintf(outfile17, "------------------\n");
+            int temp = blk->invalid_sublk -1;
+            fprintf(outfile17, "1129 blk pos %d , invalid sublk %d , temp %d\n", blk->pos, blk->invalid_sublk, temp);
 
-            if (blk->pos == blk->invalid_sublk){
-
+            if (blk->pos == temp){
+                /* continus */
             }else{
                 blk->ch = ppa->g.ch;
                 blk->lun = ppa->g.lun;
@@ -1152,7 +1169,7 @@ static void mark_page_valid(struct ssd *ssd, struct ppa *ppa)
             }
         }
     }
-
+    fprintf(outfile17, "------------------\n");
     ssd->sp.valid_page++;
     tt_vpc = tt_vpc +1;
     
@@ -1260,7 +1277,8 @@ static void clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *re
         }
     }
     fprintf(outfile9, "gc additional writer pg %d\n", cnt);
-    printf("1192 clean one sublk ipc %d\n", tt_ipc);
+    // printf("1192 clean one sublk ipc %d\n", tt_ipc);
+    fprintf(outfile9, "1192 tt_ipc %d\n", tt_ipc);
 
     // invaild_cnt = spp->pgs_per_subblk - cnt;
     // fprintf(outfile4,"%d %d %d\n",req->cmd.opcode,cnt,invaild_cnt);// valid , inalid
@@ -1277,41 +1295,38 @@ static int do_gc(struct ssd *ssd, bool force, NvmeRequest *req)
     struct nand_subblock *victim_sublk = NULL;
     int vic_sublk_count = 0;
 
-    printf("1220\n");
+    Finder_record(outfile18);
     victim_node = get_victim_node_from_Finder();
 
     if (victim_node == NULL){
+        printf("do gc no victim node\n");
+        fprintf(outfile9, "do gc no victim node\n");
+        fprintf(outfile9, " \n");
         return -1;
     };
-    printf("find vic node\n");
-    victim_blk = victim_node->blk;
-    printf("1216\n");
+    // printf("do gc\n");
 
+    victim_blk = victim_node->blk;
     ppa.g.ch = victim_blk->ch;
     ppa.g.lun = victim_blk->lun;
     ppa.g.pl = victim_blk->pl;
     ppa.g.blk = victim_blk->blk;
 
     /* copy back valid data */
-    fprintf(outfile9, "GC blk: pos= %d , invalid sub= %d\n",victim_blk->pos ,victim_blk->invalid_sublk);
+    fprintf(outfile9, "GC blk %p : pos= %d , invalid sub= %d\n",victim_blk ,victim_blk->pos ,victim_blk->invalid_sublk);
 
     for (sublk=0; sublk<spp->subblks_per_blk; sublk++){
         ppa.g.subblk = sublk;
-        printf("1226\n");
         victim_sublk = get_subblk(ssd, &ppa);
-        printf("1227\n");
-        fprintf(outfile9, "GC sublk : ipc %d , vpc %d\n",victim_sublk->ipc ,victim_sublk->vpc);
-        printf("1232\n");
+        fprintf(outfile9, "GC sublk %p : ipc %d , vpc %d\n",victim_sublk ,victim_sublk->ipc ,victim_sublk->vpc);
 
         if (victim_sublk->ipc >= 10){
-            printf("1234\n");
             clean_one_subblock(ssd, &ppa, req);
-            printf("1236\n");
             mark_subblock_free(ssd, &ppa);
-            printf("1238\n");
             vic_sublk_count = vic_sublk_count +1;
         }
     }
+    fprintf(outfile9, " \n");
 
     victim_blk->invalid_sublk = victim_blk->invalid_sublk -vic_sublk_count;
     victim_blk->pos = victim_blk->pos -vic_sublk_count;
@@ -1409,7 +1424,11 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         if (mapped_ppa(&ppa)) {
             /* update old page information first */
             // printf("pg invalid\n");
-            mark_page_invalid(ssd, &ppa, req);
+            struct nand_page *pg2 = get_pg(ssd, &ppa);
+            if (pg2->status != PG_INVALID){
+                mark_page_invalid(ssd, &ppa, req);
+            }
+
             set_rmap_ent(ssd, INVALID_LPN, &ppa);
         }
 
@@ -1509,8 +1528,10 @@ static uint64_t ssd_dsm(struct ssd *ssd, NvmeRequest *req)
             if ( /*(ppa.ppa != UNMAPPED_PPA) &&*/ mapped_ppa(&ppa)) {
 
                 /* update old page information first */
-                mark_page_invalid(ssd, &ppa, req);
-                // printf("mark end\n");
+               struct nand_page *pg2 = get_pg(ssd, &ppa);
+                if (pg2->status != PG_INVALID){
+                    mark_page_invalid(ssd, &ppa, req);
+                }
                 set_rmap_ent(ssd, INVALID_LPN, &ppa);
             }
             /* caulucate page trim count */
@@ -1614,7 +1635,9 @@ static void *ftl_thread(void *arg)
     outfile13 = fopen(fileName13, "wb");
     outfile16 = fopen(fileName16, "wb");
     outfile17 = fopen(fileName17, "wb");
+    outfile18 = fopen(fileName18, "wb");
     outfile19 = fopen(fileName19, "wb");
+    
     
 
     while (!*(ssd->dataplane_started_ptr)) {
@@ -1625,9 +1648,9 @@ static void *ftl_thread(void *arg)
     ssd->to_ftl = n->to_ftl;
     ssd->to_poller = n->to_poller;
 
-    /* test Finder */
+    /* test Finder */ 
+/*
     if (test_count == 0){
-        /* test Finder */
         printf("1560\n");
         outfile18 = fopen(fileName18, "wb");
 
@@ -1672,37 +1695,50 @@ static void *ftl_thread(void *arg)
                 }
             }
         }
-        fprintf(outfile9, "total pg %d\n", cnt);
-        /*
-        for(int i=0; i<10; i++) {
-            printf("1585 i= %d\n",i);
-            fprintf(outfile16, "target blk %p\n", test_blk);
-            test_blk->pos =i;
-            add_Finder(test_blk, test_blk->pos);
-            printf("1589 i= %d\n",i);    
-        }
+
+        test_pg = get_empty_page();
+        printf("1564\n");
+        test_blk = get_blk(ssd, test_pg);
+        printf("1566\n");
         
-        fprintf(outfile16, "target blk %p\n", test_blk);
-        test_blk->pos =0;
-        add_Finder(test_blk, test_blk->pos);
+        test_blk->ch = test_pg->g.ch;
+        test_blk->lun = test_pg->g.lun;
+        test_blk->pl = test_pg->g.pl;
+        test_blk->blk = test_pg->g.blk;
+        printf("1573\n");
 
-        fprintf(outfile16, "target blk %p\n", test_blk);
-        test_blk->pos =1;
-        add_Finder(test_blk, test_blk->pos);
+        ppa.g.ch = test_blk->ch;
+        ppa.g.lun = test_blk->lun;
+        ppa.g.pl = test_blk->pl;
+        ppa.g.blk = test_blk->blk;
+        printf("1573 \n");
 
-        fprintf(outfile16, "target blk %p\n", test_blk);
-        test_blk->pos =2;
-        printf("1561\n");
-        add_Finder(test_blk, test_blk->pos);
+        for(int i=0; i<16; i++) {
+            ppa.g.subblk = i;
+            // struct nand_subblock *temp_sublk = get_subblk(ssd, &ppa);
+            
+            if (i<5){
+                for(int j=0; j<16; j++) {
+                    ppa.g.pg = j;
+                    mark_page_valid(ssd, &ppa);
+                    cnt = cnt+1;
+                    if (j < 13){
+                        mark_page_invalid(ssd, &ppa, req);
+                        cnt = cnt+1;
+                    }
+                }
+            }else{
+                for(int j=0; j<16; j++) {
+                    ppa.g.pg = j;
+                    mark_page_valid(ssd, &ppa);
+                    cnt = cnt+1;
+                }
+            }
+        }
 
-        fprintf(outfile16, "target blk %p\n", test_blk);
-        test_blk->pos =3;
-        printf("1565\n");
-        add_Finder(test_blk, test_blk->pos);
-        */
+        fprintf(outfile9, "total pg %d\n", cnt);
         Finder_record(outfile18);
 
-        
         // struct node *victim_node = NULL;
         printf("1572\n");
         // victim_node = get_victim_node_from_Finder();
@@ -1710,12 +1746,13 @@ static void *ftl_thread(void *arg)
         // printf("1575\n");
         printf("1587\n");
         int r = do_gc(ssd, true, req);
-        printf("r = %d\n", r);
-        printf("1590\n");
+        printf("1590 r = %d\n", r);
         Finder_record(outfile18);
-    
+        r = do_gc(ssd, true, req);
+        printf("1730 r = %d\n", r);
+        Finder_record(outfile18);
     }
-
+*/
     while (1) {
     	// printf("n->num_poller %d\n",n->num_poller);
         for (i = 1; i <= n->num_poller; i++) {
