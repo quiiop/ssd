@@ -69,6 +69,7 @@ struct ppa { /* kuo */
         uint64_t ppa;
     };
     TAILQ_ENTRY(ppa) next;
+    // int was_hot_data; // 0= cold data , 1=hot data
 };
 
 struct write_pointer_table {
@@ -95,12 +96,14 @@ struct nand_subblock { /* kuo */
     int erase_cnt;
     int wp; /* current write pointer */
     int was_full;
+    int was_victim;
 };
 
 struct nand_block { /* kuo */
     struct nand_subblock *subblk;
     int nsubblks;
     int invalid_sublk;
+    int full_sublk;
     
     int ch;
     int lun;
