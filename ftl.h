@@ -69,7 +69,6 @@ struct ppa { /* kuo */
         uint64_t ppa;
     };
     TAILQ_ENTRY(ppa) next;
-    // int was_hot_data; // 0= cold data , 1=hot data
 };
 
 struct write_pointer_table {
@@ -82,11 +81,20 @@ struct trim_table {
 
 typedef int nand_sec_status_t;
 
+#define PG_HOT 1
+#define PG_COLD 0
+
 struct nand_page {
     nand_sec_status_t *sec;
     int nsecs;
     int status;
+    int attribute;
 };
+
+#define sublk_full 1
+#define sublk_not_full 0
+#define sublk_victim 1
+#define sublk_not_victim 0
 
 struct nand_subblock { /* kuo */
     struct nand_page *pg;
