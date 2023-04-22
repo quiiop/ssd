@@ -71,6 +71,11 @@ static int mark_page_invalid_count = 0;
 TAILQ_HEAD(ppa_queue, ppa);
 struct ppa_queue *Empty_page_queue = NULL; 
 
+/* Empty Sublk Queue */
+// TAILQ_HEAD(sublk_queue, nand_subblock);
+// struct sublk_queue *Empty_sublk_queue = NULL; 
+
+
 /* Finder */
 static struct Finder *finder;
 static int tt_ipc =0;
@@ -1088,6 +1093,7 @@ static uint64_t gc_write_page(struct ssd *ssd, struct ppa *old_ppa, struct ppa *
     ftl_assert(valid_lpn(ssd, lpn));
     if (save_hot_data_ppa == NULL){
         first = get_empty_page();
+        fprintf(outfile22, "find ppa : ch %d , lun %d , pl %d , blk %d , sublk %d , pg %d\n", first->g.ch, first->g.lun, first->g.pl, first->g.blk, first->g.subblk, first->g.pg);
     }else{
         first = save_hot_data_ppa;
     }
@@ -1186,12 +1192,12 @@ static void clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *re
         ftl_assert(pg_iter->status != PG_FREE);
 
         if (pg_iter->status == PG_VALID) {
-            fprintf(outfile22, "pg atrribute %d\n", pg_iter->attribute);
+            // fprintf(outfile22, "pg atrribute %d\n", pg_iter->attribute);
             if (pg_iter->attribute == PG_HOT){
-                printf("1190\n");
+                fprintf(outfile22, "PG hot , blk= %p , ", get_blk(ssd, ppa));
+                
                 struct nand_block *blk = find_block(ssd);
-                fprintf(outfile22, "pg hot , attribute %d\n", pg_iter->attribute);
-                fprintf(outfile22, "find blk %p , id %d\n", blk, blk->blk);
+                fprintf(outfile22, "next_blk= %p , next_blk id= %d , ", blk, blk->blk);
                 printf("1193\n");
 
                 if (blk==NULL){
@@ -1206,7 +1212,7 @@ static void clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *re
                 gc_write_page(ssd, ppa, new_ppa);
             }else{ 
                 struct ppa *new_ppa = NULL;
-                fprintf(outfile22, "pg cold , attribute %d\n", pg_iter->attribute);
+                fprintf(outfile22, "PG cold , blk= %p , ", get_blk(ssd, ppa));
 
                 gc_read_page(ssd, ppa);
                 gc_write_page(ssd, ppa, new_ppa);
@@ -1695,6 +1701,9 @@ static void test_case_2(struct ssd *ssd, NvmeRequest *req)
 
                 mark_page_valid(ssd, &ppa);
                 pg->attribute = PG_HOT;
+                if(j==15){
+                    pg->attribute = PG_COLD;
+                }
                 if (j < 13){
                     printf("1681\n");
                     mark_page_invalid(ssd, &ppa, req);
@@ -1814,23 +1823,6 @@ static void test_case_2(struct ssd *ssd, NvmeRequest *req)
     fprintf(outfile22, "blk 3 , invalid sublk= %d , full sublk= %d\n", test_blk->invalid_sublk, test_blk->full_sublk);
 
     Finder_record(outfile23);
-
-    /*
-    printf("1756\n");
-    struct nand_block *t_blk = find_block(ssd);
-    printf("1757\n");
-    fprintf(outfile22, "find blk %p , id %d\n", t_blk, t_blk->blk);
-    printf("1760\n");
-    struct ppa *new_ppa = find_ppa(ssd, t_blk);
-    fprintf(outfile22, "find ppa : ch %d , lun %d , pl %d , blk %d , sublk %d , pg %d\n", new_ppa->g.ch, new_ppa->g.lun, new_ppa->g.pl, new_ppa->g.blk, new_ppa->g.subblk, new_ppa->g.pg);
-    
-    struct nand_page *new_pg = get_pg(ssd, new_ppa);
-    if (new_pg->status == PG_FREE){
-        fprintf(outfile22, "pg free\n");
-    }else{
-        fprintf(outfile22, "pg not free\n");
-    }
-    */
 
     int r;
     r = do_gc(ssd, true, req);
