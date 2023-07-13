@@ -68,7 +68,6 @@ struct ppa { /* kuo */
         } g;
         uint64_t ppa;
     };
-    TAILQ_ENTRY(ppa) next;
 };
 
 struct write_pointer_table {
@@ -81,43 +80,83 @@ struct trim_table {
 
 typedef int nand_sec_status_t;
 
-#define PG_HOT 1
+/*Page的屬性*/
+#define PG_HOT 1 
 #define PG_COLD 0
+#define PG_Empty     0
+#define PG_General   1
+#define PG_Sensitive 2
+/*Hot Level分級*/
+#define Hot_level_0 0
+#define Hot_level_1 1
+#define Hot_level_2 2
+#define Hot_level_3 3
+#define nHotLevel 4
+/*Sublk的屬性*/
+#define SUBLK_VICTIM 0
+#define OLD_LPN 0
+#define NEW_LPN 1
+/*請求Empty Page的目的*/
+#define DO_CopyBack 0
+#define DO_Write 1
+/*自訂義*/
+#define False 0
+#define True 1
+
 
 struct nand_page {
     nand_sec_status_t *sec;
     int nsecs;
     int status;
-    int attribute;
+    int attribute;  // 停用
+    int Hot_level; // 紀錄這筆Page lba的Hot Level   
+    int pg_type;  // 紀錄這筆Page存的是Genernal or Sensitive lba
 };
 
-#define sublk_full 1
-#define sublk_not_full 0
-#define sublk_victim 1
-#define sublk_not_victim 0
+
+#define SUBLK_FULL 0
+#define SUBLK_NOT_FULL 1
+#define SUBLK_VICTIM 0
+#define SUBLK_NOT_VICTIM 1
 
 struct nand_subblock { /* kuo */
     struct nand_page *pg;
     int npgs;
-    int ipc; /* invalid page count */
-    int vpc; /* valid page count */
+    int ipc; /* invalid page */
+    int vpc; /* valid page*/
+    int epc; /* empty page */
     int erase_cnt;
     int wp; /* current write pointer */
-    int was_full;
-    int was_victim;
+    int was_full; // sublk是否寫滿了
+    int was_victim; // sublk是否符合GC的條件
+    int Current_Hot_Level; // sublk現在Hot Level
+    int current_page_id;
+
+    int ch;
+    int lun;
+    int pl;
+    int blk;
+    int sublk;
 };
 
+/*-1 表示沒有在Finder裡*/
+#define Blk_Not_In_Finder1 -1
+#define Blk_Not_in_Finder2 -1
 struct nand_block { /* kuo */
     struct nand_subblock *subblk;
-    int nsubblks;
-    int invalid_sublk;
-    int full_sublk;
+    int nsubblks; // blk所擁有的sublk總數
+    int current_sublk_id; // blk現在使用哪個sublk
+    int GC_Sublk_Count; // blk現在有多少符合GC條件的sublk
+    int Not_GC_Sublk_Count; // nsubblks - GC_Sublk_Count
+    int In_Finder1_Position; // blk在Finder1的位置
+    int In_Finder2_Position; // blk在Finder2的位置
+    int invalid_sublk; //停用
+    int full_sublk; //停用
     
     int ch;
     int lun;
     int pl;
     int blk;
-    int pos;
 };
 
 struct nand_plane {
@@ -256,8 +295,31 @@ struct link
 };
 
 struct Finder{
-    int size; // How many subblock
-    struct link **list;
+    int size;
+    struct link *list;
+    void (*Show_Finder)(int);
+};
+
+struct Finder2{
+    struct link *list;
+    void (*Show_Finder)(int);
+};
+
+#define Fail 0;
+#define Successful 1
+struct Queue{
+    int id;
+    int Queue_Size;
+    struct node *head;
+    struct node *tail;
+
+    /*
+    int (*Push)(struct nand_block*);
+    int (*Pop)();
+    int (*Size)();
+    struct nand_block* (*Peek)();
+    void (*Show)();
+    */ 
 };
 
 
