@@ -118,6 +118,8 @@ struct nand_page {
 #define SUBLK_NOT_FULL 1
 #define SUBLK_VICTIM 0
 #define SUBLK_NOT_VICTIM 1
+#define SUBLK_NOT_IN_FINDER1 -1
+#define SUBLK_NOT_IN_FINDER2 -1
 
 struct nand_subblock { /* kuo */
     struct nand_page *pg;
@@ -294,13 +296,18 @@ struct link
     struct node *tail;
 };
 
+#define Finder1_ID 1
 struct Finder{
+    int id;
     int size;
     struct link *list;
     void (*Show_Finder)(int);
 };
 
+#define Finder2_ID 2
 struct Finder2{
+    int id;
+    int size;
     struct link *list;
     void (*Show_Finder)(int);
 };
