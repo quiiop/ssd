@@ -132,13 +132,13 @@ struct nand_subblock { /* kuo */
     int was_full; // sublk是否寫滿了
     int was_victim; // sublk是否符合GC的條件
     int Current_Hot_Level; // sublk現在Hot Level
-    int current_page_id;
+    uint64_t current_page_id;// 現在在使用哪個Page
 
-    int ch;
-    int lun;
-    int pl;
-    int blk;
-    int sublk;
+    uint64_t ch;
+    uint64_t lun;
+    uint64_t pl;
+    uint64_t blk;
+    uint64_t sublk;
 };
 
 /*-1 表示沒有在Finder裡*/
@@ -147,7 +147,7 @@ struct nand_subblock { /* kuo */
 struct nand_block { /* kuo */
     struct nand_subblock *subblk;
     int nsubblks; // blk所擁有的sublk總數
-    int current_sublk_id; // blk現在使用哪個sublk
+    uint64_t current_sublk_id; // blk現在使用哪個sublk
     int GC_Sublk_Count; // blk現在有多少符合GC條件的sublk
     int Not_GC_Sublk_Count; // nsubblks - GC_Sublk_Count
     int In_Finder1_Position; // blk在Finder1的位置
@@ -155,10 +155,10 @@ struct nand_block { /* kuo */
     int invalid_sublk; //停用
     int full_sublk; //停用
     
-    int ch;
-    int lun;
-    int pl;
-    int blk;
+    uint64_t ch;
+    uint64_t lun;
+    uint64_t pl;
+    uint64_t blk;
 };
 
 struct nand_plane {
