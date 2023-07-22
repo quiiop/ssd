@@ -224,6 +224,7 @@ static int Remove_Node(struct link *list, struct node *n)
         }
         free(current);
     }
+    free(n);
     return is_find;
 }
 
@@ -864,6 +865,7 @@ static int Calculate_Sublk_Hot_Level(struct ssd *ssd, struct nand_subblock *subl
         r = 3;
     }
 
+    fprintf(outfile26, "r = %d\n", r);
     return r;    
 }
 
@@ -892,7 +894,8 @@ static void mark_page_invalid(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
     subblk->ipc++;
     subblk->vpc--;
     int New_Hot_Level = Calculate_Sublk_Hot_Level(ssd, subblk, ppa);
-    if(subblk->Current_Hot_Level != New_Hot_Level){
+    /*如果invalid page是在現在正在使用的sublk裡，blk才有可能改變Finder2的位置*/
+    if(subblk->Current_Hot_Level != New_Hot_Level && subblk->sublk == blk->current_sublk_id){ 
         Change_Blk_Position_InFinder2(blk, New_Hot_Level);
         subblk->Current_Hot_Level = New_Hot_Level;
     }
@@ -962,10 +965,35 @@ static void mark_page_valid(struct ssd *ssd, struct ppa *ppa)
                 count++;
             }
         }
-        /*如果現在的sublk不是最後一個的話，代表我們下一次可以寫資料到new sublk，所以要先把blk搬到Finder2 Hot Level 0*/
-        if (count < (spp->subblks_per_blk-1)){ 
-            New_Hot_Level = 0;
-            Change_Blk_Position_InFinder2(blk, New_Hot_Level);
+        /*現在使用的sublk已經滿了，我們要換下一個sublk，代表我們下一次可以寫資料到new sublk，所以要先把blk搬到Finder2 Hot Level 0*/
+        /*
+        舉例 :
+        1. blk : sublk1、2、3 都滿了，使用sublk4。
+        2. 當sublk4寫滿時，前面sublk2剛好有被clean(可能是裡面有sensitive lba)，此時blk應該要知道sublk2是可以寫入的。
+        */
+        int key = 0;
+        if (count!=spp->subblks_per_blk){ //還有sublk可以寫入
+            for (int i=subblk->sublk; i<spp->subblks_per_blk; i++){
+                subblk = *blk->subblk[i];
+                if (subblk->epc == spp->pgs_per_subblk){ //找到可以寫入的sublk
+                    New_Hot_Level = 0;
+                    Change_Blk_Position_InFinder2(blk, New_Hot_Level);
+                    key = 1;
+                }
+            }
+            if(key==0){
+                for (int i=0; i<subblk->sublk; i++){
+                    subblk = *blk->subblk[i];
+                    if (subblk->epc == spp->pgs_per_subblk){ //找到可以寫入的sublk
+                        New_Hot_Level = 0;
+                        Change_Blk_Position_InFinder2(blk, New_Hot_Level);
+                        key = 1;
+                    }
+                }
+            }
+        }
+        if (key==0){
+            fprintf(outfile26, "mark_page_valid : blk was full\n");
         }
     }
 
@@ -986,6 +1014,14 @@ static void mark_subblock_free(struct ssd *ssd, struct ppa *ppa)
         pg->Hot_level = Hot_level_0;
         pg->pg_type = PG_Empty;
     }
+    struct nand_block *blk = get_blk(ssd, ppa);
+    int Sublk_Full_count = 0;
+    for (int i=0; i<spp->subblks_per_blk; i++){
+        sublk = &blk->subblk[i];
+        if (sublk->was_full = SUBLK_FULL){
+            Sublk_Full_count++;
+        }
+    }
 
     /* 重置 sublock Status */
     sublk->vpc =0;
@@ -995,6 +1031,42 @@ static void mark_subblock_free(struct ssd *ssd, struct ppa *ppa)
     sublk->was_full = SUBLK_NOT_FULL;
     sublk->was_victim = SUBLK_NOT_VICTIM;
     sublk->Current_Hot_Level = SUBLK_NOT_IN_FINDER2;
+    sublk->current_page_id = 0;
+
+    /*  
+    1. 如果blk的所有sublk都是空的，blk放回Free_Block_Management
+    2. 有2種情況 :
+	    1. 假設sublk有4個，current_sublk_id = 3，而這次是clean sublk1，那此時blk->current_sublk_id依然等於sublk3，之後是寫sublk4、sublk1， 當current sublk寫滿時，blk需要找下一個可以寫入的sublk，mark_page_valid( )會幫我們處理
+	    2. 但是如果4個sublk原本本身就都是滿的，那sublk->current_sublk_id = 第一個Empty Sublk
+    */
+    int Empty_Sublk_Count=0;
+    int sublk_id = 0; //第一個Empty Sublk當作下次寫入的sublk
+    for (int i=0; i<spp->subblks_per_blk; i++){
+        sublk = &blk->subblk[i];
+        if (sublk->epc == spp->pgs_per_subblk){
+            if (Empty_Sublk_Count==0){
+                sublk_id = i;
+            }
+            Empty_Sublk_Count++;
+        }
+    }
+
+    if (Empty_Sublk_Count == spp->subblks_per_blk){
+        struct node *n = init_node(blk);
+        int Old_Hot_Level = blk->In_Finder2_Position;
+        Remove_Node(&finder2->list[Old_Hot_Level], n);
+        Push(Free_Block_Management, blk);
+    }else{
+        if (Sublk_Full_count == spp->subblks_per_blk){
+            blk->current_sublk_id = sublk_id;
+            sublk = &blk->subblk[sublk_id];
+            sublk->Current_Hot_Level = Hot_level_0;
+            int New_Hot_Level = 0;
+            Change_Blk_Position_InFinder2(blk, New_Hot_Level);
+        }else{
+            /*什麼都不做*/
+        }
+    }
 }
 
 static void gc_read_page(struct ssd *ssd, struct ppa *ppa)
@@ -1055,13 +1127,12 @@ static struct nand_subblock *find(struct ssd *ssd, int Temp_Level)
         for (; current!=NULL; current=current->next){
             
             struct nand_block *blk = current->blk;
-            for (int i=0; i<spp->subblks_per_blk; i++){
-                
-                struct nand_subblock *sublk = &blk->subblk[i];
-                if(sublk->epc!=0){
-                    return sublk; 
-                }
-            }
+           /*看blk的sublk是否有空間寫入，應該是只看blk->current_sublk_id，因為blk之所以分到現在這個Hot_Level是因為current_sublk。*/
+           int current_sublk_id = blk->current_sublk_id;
+           struct nand_subblock *sublk = &blk->subblk[current_sublk_id];
+           if(sublk->epc!=0){
+                return sublk;
+           }
         }
     }
     return NULL;
@@ -1073,7 +1144,7 @@ static struct nand_subblock *Find_sublk(struct ssd *ssd, int *array)
         struct nand_subblock *sublk = find(ssd, array[i]);
         if (sublk!=NULL){
             return sublk;
-        } 
+        }
     }
     return NULL;
 }
@@ -1197,15 +1268,15 @@ static struct ppa *get_empty_page(struct ssd *ssd, int Hot_Level, int condition)
         }else{
             if(Hot_Level==-1){
                 Hot_Level = 0;
-                printf("1200\n");
+                //printf("1200\n");
                 empty_pg = get_Empty_pg_from_Finder2(ssd, Hot_Level);
             }else{
                 int New_Hot_level = Hot_Level +1;
                 if (New_Hot_level>(nHotLevel-1)){
-                    printf("1205\n");
+                    //printf("1205\n");
                     empty_pg = get_Empty_pg_from_Finder2(ssd, Hot_Level);
                 }else{
-                    printf("1208\n");
+                    //printf("1208\n");
                     empty_pg = get_Empty_pg_from_Finder2(ssd, New_Hot_level);
                 }
             }
@@ -1217,22 +1288,22 @@ static struct ppa *get_empty_page(struct ssd *ssd, int Hot_Level, int condition)
     }else if(condition == DO_CopyBack){
         /*  1.先看Finder2有沒有empty page
             2. Finder2沒有，再向Free_Block_Management要 */
-        printf("1215\n");
+        //printf("1215\n");
         empty_pg = get_Empty_pg_from_Finder2(ssd, Hot_Level);
         /*紀錄blk現在使用哪個sublk，紀錄sublk現在使用哪個page*/
         if (empty_pg!=NULL){
-            printf("1219\n");
+            //printf("1219\n");
             struct nand_block *blk = get_blk(ssd, empty_pg);
             blk->current_sublk_id = empty_pg->g.subblk;
             blk->subblk[blk->current_sublk_id].current_page_id = empty_pg->g.pg;
         }else{
-            printf("1224\n");
+            //printf("1224\n");
             if ((Hot_Level-1)<-1){
                 Hot_Level = -1;
             }else{
                 Hot_Level--;
             }
-            printf("1229\n");
+            //printf("1229\n");
             empty_pg = get_empty_page(ssd, Hot_Level, DO_Write);
         }
     }else{
@@ -1381,7 +1452,6 @@ static uint64_t ssd_read(struct ssd *ssd, NvmeRequest *req)
     return maxlat;
 }
 
-/*工作日誌 : 檢查secure_deletion_table[i]取出的值是struct ppa or struct ppa **/
 static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table, int sensitive_lpn_count, int temp_lpn_count)
 {
     int index = 0;
@@ -1408,14 +1478,14 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
 
     fprintf(outfile26, "Do Secure Deletion \n");
     for(int i=0; i<index; i++){
-        printf("1403\n");
+        //printf("1403\n");
         clean_one_subblock(ssd, &table[i], NULL);
         struct nand_block *blk = get_blk(ssd, &table[i]);
         struct nand_subblock *sublk = get_subblk(ssd, &table[i]);
         fprintf(outfile26, "GC blk id %lu , sublk id %lu\n", blk->blk, sublk->sublk);
     }
     for(int i=0; i<index; i++){
-        printf("1409\n");
+        //printf("1409\n");
         mark_subblock_free(ssd, &table[i]);
         struct nand_block *blk = get_blk(ssd, &table[i]);
         struct nand_subblock *sublk = get_subblk(ssd, &table[i]);
@@ -1684,7 +1754,7 @@ static void Test_Case(struct ssd *ssd)
     struct nand_page *empty_pg = NULL;
     outfile26 = fopen(fileName26, "wb");
     
-    /*Test 從Free_Block_Management取得empty page*/
+/*Test 從Free_Block_Management取得empty page*/
     /*
     empty_ppa = get_empty_page(ssd, -1, DO_Write);
     empty_pg = get_pg(ssd, empty_ppa);
@@ -1693,7 +1763,7 @@ static void Test_Case(struct ssd *ssd)
     fprintf(outfile26, "ppa : ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d\n", empty_ppa->g.ch, empty_ppa->g.lun, empty_ppa->g.pl ,empty_ppa->g.blk, empty_ppa->g.subblk, empty_ppa->g.pg);
     */
      
-    /*Test 從Temp_Block_Management取得empty page*/
+/*Test 從Temp_Block_Management取得empty page*/
     /*
     empty_ppa = get_empty_page(ssd, -1, DO_Write);
     empty_pg = get_pg(ssd, empty_ppa);
@@ -1720,7 +1790,7 @@ static void Test_Case(struct ssd *ssd)
     }
     */
 
-   /*Test Finder1*/
+/*Test Finder1*/
    /*
    for (int i=0; i<300; i++){ // Test victim sublk 10
         empty_ppa = get_empty_page(ssd, -1, DO_Write);
@@ -1755,7 +1825,7 @@ static void Test_Case(struct ssd *ssd)
     }
    */
 
-    /*Test 從Finder2取得empty page*/
+/*Test 從Finder2取得empty page*/
     /*
     Free_Block_Management->Queue_Size = 0;
     Temp_Block_Management->Queue_Size = 0;
@@ -1763,8 +1833,68 @@ static void Test_Case(struct ssd *ssd)
     fprintf(outfile26, "From Finder2 : ppa : ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d\n", empty_ppa->g.ch, empty_ppa->g.lun, empty_ppa->g.pl ,empty_ppa->g.blk, empty_ppa->g.subblk, empty_ppa->g.pg);
     */
 
-    
-   /* Test Secure deletion */
+/* Test Block */ 
+    /*
+    struct nand_block *blk = NULL;
+    struct nand_subblock *sublk = NULL;
+    struct ppa *arr = malloc(sizeof(struct ppa)*10);
+    int index = 0;
+
+    printf("1774\n");
+    for (int j=0; j<16; j++){
+        printf("1776\n");
+        empty_ppa = get_empty_page(ssd, -1, DO_Write);
+        printf("1777\n");
+        empty_pg = get_pg(ssd, empty_ppa);
+        printf("1779\n");
+        if (j<7){
+            printf("1781\n");
+            empty_pg->Hot_level = Hot_level_1;
+            printf("1783\n");
+        }else{
+            printf("1784\n");
+            empty_pg->Hot_level = Hot_level_2;
+            printf("1782\n");
+            arr[index] = *empty_ppa;
+            index++;
+        }
+        printf("1790\n");
+        mark_page_valid(ssd, empty_ppa);
+        printf("1791\n");
+        blk = get_blk(ssd, empty_ppa);
+        sublk = get_subblk(ssd, empty_ppa); 
+        fprintf(outfile26, "R1, Block : current sublk id %lu, F1 pos %d, F2 pos %d\n",blk->current_sublk_id ,blk->In_Finder1_Position, blk->In_Finder2_Position);
+        fprintf(outfile26, "R1, sublk id %lu, vpc %d, ipc %d, epc %d, Hot_Level %d\n",sublk->sublk, sublk->vpc, sublk->ipc, sublk->epc, sublk->Current_Hot_Level);
+    }
+    printf("1789\n");
+
+    for (int j=0; j<10; j++){
+        empty_ppa = get_empty_page(ssd, -1, DO_Write);
+        empty_pg = get_pg(ssd, empty_ppa);
+        empty_pg->Hot_level = Hot_level_3;
+        mark_page_valid(ssd, empty_ppa);
+        blk = get_blk(ssd, empty_ppa);
+        sublk = get_subblk(ssd, empty_ppa); 
+        fprintf(outfile26, "R2, Block : current sublk id %lu, F1 pos %d, F2 pos %d\n",blk->current_sublk_id ,blk->In_Finder1_Position, blk->In_Finder2_Position);
+        fprintf(outfile26, "R2, sublk id %lu, vpc %d, ipc %d, epc %d, Hot_Level %d\n",sublk->sublk, sublk->vpc, sublk->ipc, sublk->epc, sublk->Current_Hot_Level);
+    }
+    printf("1799\n");
+
+    for (int i=0; i<=index ;i++){
+        mark_page_invalid(ssd, &arr[i], NULL);
+    }
+    printf("1804\n");
+
+    fprintf(outfile26, "Finall, Block : current sublk id %lu, F1 pos %d, F2 pos %d\n",blk->current_sublk_id ,blk->In_Finder1_Position, blk->In_Finder2_Position);
+    fprintf(outfile26, "Finall, sublk id %lu, vpc %d, ipc %d, epc %d, Hot_Level %d\n",sublk->sublk, sublk->vpc, sublk->ipc, sublk->epc, sublk->Current_Hot_Level);
+    fprintf(outfile26, "------------------------\n");
+
+    Print_Finder(outfile26, 1);
+    fprintf(outfile26, "  \n");
+    Print_Finder(outfile26, 2); 
+    */
+
+/* Test Secure deletion */
     struct ppa *secure_deletion_table = malloc(sizeof(struct ppa) * (300));
     int sensitive_lpn_count = 0;
     for (int i=0; i<300; i++){ // Test victim sublk 10
@@ -1802,6 +1932,10 @@ static void Test_Case(struct ssd *ssd)
     fprintf(outfile26, "------------------------\n");
     
     
+/* Test Secure deletion 2*/
+    // struct ppa *secure_deletion_table = malloc(sizeof(struct ppa) * (300));
+
+
     Print_Queue(Temp_Block_Management, outfile26);
     fclose(outfile26);
 } 
