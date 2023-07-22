@@ -1,0 +1,1949 @@
+7/22 Test !! 
+1. Next sublk id 1
+1. Next sublk id 2
+1. Next sublk id 3
+1. Next sublk id 4
+1. Next sublk id 5
+1. Next sublk id 6
+1. Next sublk id 7
+1. Next sublk id 8
+1. Next sublk id 9
+1. Next sublk id 10
+1. Next sublk id 11
+1. Next sublk id 12
+1. Next sublk id 13
+1. Next sublk id 14
+1. Next sublk id 15
+3. Next sublk None, Blk was full
+1. Next sublk id 1
+1. Next sublk id 2
+1. Next sublk id 3
+1. Next sublk id 4
+1. Next sublk id 5
+1. Next sublk id 6
+1. Next sublk id 7
+1. Next sublk id 8
+1. Next sublk id 9
+1. Next sublk id 10
+1. Next sublk id 11
+1. Next sublk id 12
+1. Next sublk id 13
+1. Next sublk id 14
+1. Next sublk id 15
+3. Next sublk None, Blk was full
+1. Next sublk id 1
+1. Next sublk id 2
+1. Next sublk id 3
+1. Next sublk id 4
+1. Next sublk id 5
+1. Next sublk id 6
+1. Next sublk id 7
+1. Next sublk id 8
+1. Next sublk id 9
+1. Next sublk id 10
+1. Next sublk id 11
+1. Next sublk id 12
+1. Next sublk id 13
+1. Next sublk id 14
+1. Next sublk id 15
+3. Next sublk None, Blk was full
+1. Next sublk id 1
+1. Next sublk id 2
+1. Next sublk id 3
+1. Next sublk id 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 0
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 10
+invalid blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 11
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 12
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 13
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 14
+1. Next sublk id 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 15
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 0
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 10
+invalid blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 11
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 12
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 13
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 14
+1. Next sublk id 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 15
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 0
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 10
+invalid blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 11
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 12
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 13
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 14
+1. Next sublk id 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 15
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 0
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 10
+invalid blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 11
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 12
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 13
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 14
+1. Next sublk id 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 15
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 0
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 10
+invalid blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 11
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 12
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 13
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 14
+1. Next sublk id 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 15
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 0
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 10
+invalid blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 11
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 12
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 13
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 14
+1. Next sublk id 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 15
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 0
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 10
+invalid blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 11
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 12
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 13
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 14
+1. Next sublk id 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 15
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 0
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 10
+invalid blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 11
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 12
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 13
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 14
+1. Next sublk id 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 15
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 0
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 10
+invalid blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 11
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 12
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 13
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 14
+1. Next sublk id 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 15
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 0
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 1
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 2
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 3
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 4
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 5
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 6
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 7
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 8
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 9
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 10
+invalid blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 11
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 12
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 13
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 14
+1. Next sublk id 10
+blk4 : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 15
+2139 : sublk id 0, vpc 15, ipc 1, epc 0
+2139 : sublk id 1, vpc 15, ipc 1, epc 0
+2139 : sublk id 2, vpc 15, ipc 1, epc 0
+2139 : sublk id 3, vpc 15, ipc 1, epc 0
+2139 : sublk id 4, vpc 15, ipc 1, epc 0
+2139 : sublk id 5, vpc 15, ipc 1, epc 0
+2139 : sublk id 6, vpc 15, ipc 1, epc 0
+2139 : sublk id 7, vpc 15, ipc 1, epc 0
+2139 : sublk id 8, vpc 15, ipc 1, epc 0
+2139 : sublk id 9, vpc 15, ipc 1, epc 0
+2139 : sublk id 10, vpc 0, ipc 0, epc 16
+2139 : sublk id 11, vpc 0, ipc 0, epc 16
+2139 : sublk id 12, vpc 0, ipc 0, epc 16
+2139 : sublk id 13, vpc 0, ipc 0, epc 16
+2139 : sublk id 14, vpc 0, ipc 0, epc 16
+2139 : sublk id 15, vpc 0, ipc 0, epc 16
+ 
+Before -------------------- 
+Finder2 : 
+Link 0 : Blk 0 -> Blk 1 -> Blk 3 -> Blk 4 -> NULL
+Link 1 : Empty 
+Link 2 : Blk 2 -> NULL
+Link 3 : Empty 
+-------------------- 
+ 
+--------------------------------
+secure_deletion_table
+sublk 0x56230a073740 ,PPA blk= 4, sublk= 0, pg= 10
+sublk 0x56230a0737a0 ,PPA blk= 4, sublk= 1, pg= 10
+sublk 0x56230a073800 ,PPA blk= 4, sublk= 2, pg= 10
+sublk 0x56230a073860 ,PPA blk= 4, sublk= 3, pg= 10
+sublk 0x56230a0738c0 ,PPA blk= 4, sublk= 4, pg= 10
+sublk 0x56230a073920 ,PPA blk= 4, sublk= 5, pg= 10
+sublk 0x56230a073980 ,PPA blk= 4, sublk= 6, pg= 10
+sublk 0x56230a0739e0 ,PPA blk= 4, sublk= 7, pg= 10
+sublk 0x56230a073a40 ,PPA blk= 4, sublk= 8, pg= 10
+sublk 0x56230a073aa0 ,PPA blk= 4, sublk= 9, pg= 10
+table
+sublk 0x56230a073740 ,PPA blk= 4, sublk= 0, pg= 10
+sublk 0x56230a0737a0 ,PPA blk= 4, sublk= 1, pg= 10
+sublk 0x56230a073800 ,PPA blk= 4, sublk= 2, pg= 10
+sublk 0x56230a073860 ,PPA blk= 4, sublk= 3, pg= 10
+sublk 0x56230a0738c0 ,PPA blk= 4, sublk= 4, pg= 10
+sublk 0x56230a073920 ,PPA blk= 4, sublk= 5, pg= 10
+sublk 0x56230a073980 ,PPA blk= 4, sublk= 6, pg= 10
+sublk 0x56230a0739e0 ,PPA blk= 4, sublk= 7, pg= 10
+sublk 0x56230a073a40 ,PPA blk= 4, sublk= 8, pg= 10
+sublk 0x56230a073aa0 ,PPA blk= 4, sublk= 9, pg= 10
+--------------------------------
+Do Secure Deletion 
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 5, ipc 0, epc 11
+Finder2 find sublk id 4
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 0
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 6, ipc 0, epc 10
+Finder2 find sublk id 4
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 1
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 7, ipc 0, epc 9
+Finder2 find sublk id 4
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 2
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 8, ipc 0, epc 8
+Finder2 find sublk id 4
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 3
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 9, ipc 0, epc 7
+Finder2 find sublk id 4
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 4
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 9
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 10, ipc 0, epc 6
+Finder2 find sublk id 4
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 5
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 10
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 11, ipc 0, epc 5
+Finder2 find sublk id 4
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 6
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 11
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 12, ipc 0, epc 4
+Finder2 find sublk id 4
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 7
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 12
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 13, ipc 0, epc 3
+Finder2 find sublk id 4
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 8
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 13
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 14, ipc 0, epc 2
+Finder2 find sublk id 4
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 9
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 14
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 4
+sublk id 4, vpc 15, ipc 0, epc 1
+Finder2 find sublk id 4
+1. Next sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 11
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 4, pg 15
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 0, ipc 0, epc 16
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 12
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 0
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 0, ipc 0, epc 16
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 13
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 0
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 1, ipc 0, epc 15
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 14
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 1
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 2, ipc 0, epc 14
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 0, pg 15
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 2
+GC blk id 4 , sublk id 0
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 3, ipc 0, epc 13
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 0
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 3
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 4, ipc 0, epc 12
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 1
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 4
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 5, ipc 0, epc 11
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 2
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 6, ipc 0, epc 10
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 3
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 7, ipc 0, epc 9
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 4
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 8, ipc 0, epc 8
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 5
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 9, ipc 0, epc 7
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 6
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 9
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 10, ipc 0, epc 6
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 7
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 10
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 11, ipc 0, epc 5
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 8
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 11
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 12, ipc 0, epc 4
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 9
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 12
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 13, ipc 0, epc 3
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 11
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 13
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 14, ipc 0, epc 2
+Finder2 find sublk id 10
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 12
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 14
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 10
+sublk id 10, vpc 15, ipc 0, epc 1
+Finder2 find sublk id 10
+1. Next sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 13
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 10, pg 15
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 1, ipc 0, epc 15
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 14
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 1
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 2, ipc 0, epc 14
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 1, pg 15
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 2
+GC blk id 4 , sublk id 1
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 3, ipc 0, epc 13
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 0
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 3
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 4, ipc 0, epc 12
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 1
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 4
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 5, ipc 0, epc 11
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 2
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 6, ipc 0, epc 10
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 3
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 7, ipc 0, epc 9
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 4
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 8, ipc 0, epc 8
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 5
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 9, ipc 0, epc 7
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 6
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 9
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 10, ipc 0, epc 6
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 7
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 10
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 11, ipc 0, epc 5
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 8
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 11
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 12, ipc 0, epc 4
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 9
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 12
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 13, ipc 0, epc 3
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 11
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 13
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 14, ipc 0, epc 2
+Finder2 find sublk id 5
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 12
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 14
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 5
+sublk id 5, vpc 15, ipc 0, epc 1
+Finder2 find sublk id 5
+1. Next sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 13
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 5, pg 15
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 0, ipc 0, epc 16
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 14
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 0
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 0, ipc 0, epc 16
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 2, pg 15
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 0
+GC blk id 4 , sublk id 2
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 1, ipc 0, epc 15
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 0
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 1
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 2, ipc 0, epc 14
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 1
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 2
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 3, ipc 0, epc 13
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 2
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 3
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 4, ipc 0, epc 12
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 3
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 4
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 5, ipc 0, epc 11
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 4
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 6, ipc 0, epc 10
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 5
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 7, ipc 0, epc 9
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 6
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 8, ipc 0, epc 8
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 7
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 9, ipc 0, epc 7
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 8
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 9
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 10, ipc 0, epc 6
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 9
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 10
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 11, ipc 0, epc 5
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 11
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 11
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 12, ipc 0, epc 4
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 12
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 12
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 13, ipc 0, epc 3
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 13
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 13
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 14, ipc 0, epc 2
+Finder2 find sublk id 11
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 14
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 14
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 11
+sublk id 11, vpc 15, ipc 0, epc 1
+Finder2 find sublk id 11
+1. Next sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 3, pg 15
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 11, pg 15
+GC blk id 4 , sublk id 3
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 1, ipc 0, epc 15
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 0
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 1
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 2, ipc 0, epc 14
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 1
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 2
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 3, ipc 0, epc 13
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 2
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 3
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 4, ipc 0, epc 12
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 3
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 4
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 5, ipc 0, epc 11
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 4
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 6, ipc 0, epc 10
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 5
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 7, ipc 0, epc 9
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 6
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 8, ipc 0, epc 8
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 7
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 9, ipc 0, epc 7
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 8
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 9
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 10, ipc 0, epc 6
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 9
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 10
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 11, ipc 0, epc 5
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 11
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 11
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 12, ipc 0, epc 4
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 12
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 12
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 13, ipc 0, epc 3
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 13
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 13
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 14, ipc 0, epc 2
+Finder2 find sublk id 6
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 14
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 14
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 6
+sublk id 6, vpc 15, ipc 0, epc 1
+Finder2 find sublk id 6
+1. Next sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 4, pg 15
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 6, pg 15
+GC blk id 4 , sublk id 4
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 0, ipc 0, epc 16
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 0
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 0
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 0, ipc 0, epc 16
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 1
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 0
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 1, ipc 0, epc 15
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 2
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 1
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 2, ipc 0, epc 14
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 3
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 2
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 3, ipc 0, epc 13
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 4
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 3
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 4, ipc 0, epc 12
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 5
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 4
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 5, ipc 0, epc 11
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 6
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 6, ipc 0, epc 10
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 7
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 7, ipc 0, epc 9
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 8
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 8, ipc 0, epc 8
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 9
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 9, ipc 0, epc 7
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 11
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 9
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 10, ipc 0, epc 6
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 12
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 10
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 11, ipc 0, epc 5
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 13
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 11
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 12, ipc 0, epc 4
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 14
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 12
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 13, ipc 0, epc 3
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 5, pg 15
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 13
+GC blk id 4 , sublk id 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 14, ipc 0, epc 2
+Finder2 find sublk id 12
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 0
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 14
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 12
+sublk id 12, vpc 15, ipc 0, epc 1
+Finder2 find sublk id 12
+1. Next sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 1
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 12, pg 15
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 1, ipc 0, epc 15
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 2
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 1
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 2, ipc 0, epc 14
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 3
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 2
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 3, ipc 0, epc 13
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 4
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 3
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 4, ipc 0, epc 12
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 5
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 4
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 5, ipc 0, epc 11
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 6
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 6, ipc 0, epc 10
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 7
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 7, ipc 0, epc 9
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 8
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 8, ipc 0, epc 8
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 9
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 9, ipc 0, epc 7
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 11
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 9
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 10, ipc 0, epc 6
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 12
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 10
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 11, ipc 0, epc 5
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 13
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 11
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 12, ipc 0, epc 4
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 14
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 12
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 13, ipc 0, epc 3
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 6, pg 15
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 13
+GC blk id 4 , sublk id 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 14, ipc 0, epc 2
+Finder2 find sublk id 7
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 0
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 14
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 7
+sublk id 7, vpc 15, ipc 0, epc 1
+Finder2 find sublk id 7
+1. Next sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 1
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 7, pg 15
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 0, ipc 0, epc 16
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 2
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 0
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 0, ipc 0, epc 16
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 3
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 0
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 1, ipc 0, epc 15
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 4
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 1
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 2, ipc 0, epc 14
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 5
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 2
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 3, ipc 0, epc 13
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 6
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 3
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 4, ipc 0, epc 12
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 7
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 4
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 5, ipc 0, epc 11
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 8
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 6, ipc 0, epc 10
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 9
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 7, ipc 0, epc 9
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 11
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 8, ipc 0, epc 8
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 12
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 9, ipc 0, epc 7
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 13
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 9
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 10, ipc 0, epc 6
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 14
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 10
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 11, ipc 0, epc 5
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 7, pg 15
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 11
+GC blk id 4 , sublk id 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 12, ipc 0, epc 4
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 0
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 12
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 13, ipc 0, epc 3
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 1
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 13
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 14, ipc 0, epc 2
+Finder2 find sublk id 13
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 2
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 14
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 13
+sublk id 13, vpc 15, ipc 0, epc 1
+Finder2 find sublk id 13
+1. Next sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 3
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 13, pg 15
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 1, ipc 0, epc 15
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 4
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 1
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 2, ipc 0, epc 14
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 5
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 2
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 3, ipc 0, epc 13
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 6
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 3
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 4, ipc 0, epc 12
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 7
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 4
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 5, ipc 0, epc 11
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 8
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 6, ipc 0, epc 10
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 9
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 7, ipc 0, epc 9
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 11
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 8, ipc 0, epc 8
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 12
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 9, ipc 0, epc 7
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 13
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 9
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 10, ipc 0, epc 6
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 14
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 10
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 11, ipc 0, epc 5
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 8, pg 15
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 11
+GC blk id 4 , sublk id 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 12, ipc 0, epc 4
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 0
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 12
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 13, ipc 0, epc 3
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 1
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 13
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 14, ipc 0, epc 2
+Finder2 find sublk id 8
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 2
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 14
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 8
+sublk id 8, vpc 15, ipc 0, epc 1
+Finder2 find sublk id 8
+1. Next sublk id 9
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 3
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 8, pg 15
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 14
+sublk id 14, vpc 0, ipc 0, epc 16
+Finder2 find sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 4
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 14, pg 0
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 3,  sublk id 9
+sublk id 9, vpc 0, ipc 0, epc 16
+Finder2 find sublk id 9
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 5
+CL New valid      : ch 0, lun 0, pl 0, blk 3, sublk 9, pg 0
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 14
+sublk id 14, vpc 1, ipc 0, epc 15
+Finder2 find sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 6
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 14, pg 1
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 14
+sublk id 14, vpc 2, ipc 0, epc 14
+Finder2 find sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 7
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 14, pg 2
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 14
+sublk id 14, vpc 3, ipc 0, epc 13
+Finder2 find sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 8
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 14, pg 3
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 14
+sublk id 14, vpc 4, ipc 0, epc 12
+Finder2 find sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 9
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 14, pg 4
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 14
+sublk id 14, vpc 5, ipc 0, epc 11
+Finder2 find sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 11
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 14, pg 5
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 14
+sublk id 14, vpc 6, ipc 0, epc 10
+Finder2 find sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 12
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 14, pg 6
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 14
+sublk id 14, vpc 7, ipc 0, epc 9
+Finder2 find sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 13
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 14, pg 7
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 14
+sublk id 14, vpc 8, ipc 0, epc 8
+Finder2 find sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 14
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 14, pg 8
+Test blk id 0,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 1,  sublk id 15
+sublk id 15, vpc 16, ipc 0, epc 0
+Test blk id 4,  sublk id 14
+sublk id 14, vpc 9, ipc 0, epc 7
+Finder2 find sublk id 14
+CL Original valid : ch 0, lun 0, pl 0, blk 4, sublk 9, pg 15
+CL New valid      : ch 0, lun 0, pl 0, blk 4, sublk 14, pg 9
+GC blk id 4 , sublk id 9
+1512 Mark Free sublk 0x56230a073740
+1512 blk=4, sublk=0, pg=15
+1037 Mark Free sublk 0x56230a073740
+1037 blk=4, sublk=0, pg=15
+1059 : sublk id 0, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 0, Empty_Sublk_Count= 1
+1059 : sublk id 1, vpc 15, ipc 1, epc 0
+1059 : sublk id 2, vpc 15, ipc 1, epc 0
+1059 : sublk id 3, vpc 15, ipc 1, epc 0
+1059 : sublk id 4, vpc 15, ipc 1, epc 0
+1059 : sublk id 5, vpc 15, ipc 1, epc 0
+1059 : sublk id 6, vpc 15, ipc 1, epc 0
+1059 : sublk id 7, vpc 15, ipc 1, epc 0
+1059 : sublk id 8, vpc 15, ipc 1, epc 0
+1059 : sublk id 9, vpc 15, ipc 1, epc 0
+1059 : sublk id 10, vpc 16, ipc 0, epc 0
+1059 : sublk id 11, vpc 16, ipc 0, epc 0
+1059 : sublk id 12, vpc 16, ipc 0, epc 0
+1059 : sublk id 13, vpc 16, ipc 0, epc 0
+1059 : sublk id 14, vpc 10, ipc 0, epc 6
+1059 : sublk id 15, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 15, Empty_Sublk_Count= 2
+1066 : blk= 4, Empty_Sublk_Count= 2
+FREE blk id 4 , sublk id 0, sublk vpc 0, ipc 0, epc 16
+1512 Mark Free sublk 0x56230a0737a0
+1512 blk=4, sublk=1, pg=15
+1037 Mark Free sublk 0x56230a0737a0
+1037 blk=4, sublk=1, pg=15
+1059 : sublk id 0, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 0, Empty_Sublk_Count= 1
+1059 : sublk id 1, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 1, Empty_Sublk_Count= 2
+1059 : sublk id 2, vpc 15, ipc 1, epc 0
+1059 : sublk id 3, vpc 15, ipc 1, epc 0
+1059 : sublk id 4, vpc 15, ipc 1, epc 0
+1059 : sublk id 5, vpc 15, ipc 1, epc 0
+1059 : sublk id 6, vpc 15, ipc 1, epc 0
+1059 : sublk id 7, vpc 15, ipc 1, epc 0
+1059 : sublk id 8, vpc 15, ipc 1, epc 0
+1059 : sublk id 9, vpc 15, ipc 1, epc 0
+1059 : sublk id 10, vpc 16, ipc 0, epc 0
+1059 : sublk id 11, vpc 16, ipc 0, epc 0
+1059 : sublk id 12, vpc 16, ipc 0, epc 0
+1059 : sublk id 13, vpc 16, ipc 0, epc 0
+1059 : sublk id 14, vpc 10, ipc 0, epc 6
+1059 : sublk id 15, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 15, Empty_Sublk_Count= 3
+1066 : blk= 4, Empty_Sublk_Count= 3
+FREE blk id 4 , sublk id 1, sublk vpc 0, ipc 0, epc 16
+1512 Mark Free sublk 0x56230a073800
+1512 blk=4, sublk=2, pg=15
+1037 Mark Free sublk 0x56230a073800
+1037 blk=4, sublk=2, pg=15
+1059 : sublk id 0, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 0, Empty_Sublk_Count= 1
+1059 : sublk id 1, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 1, Empty_Sublk_Count= 2
+1059 : sublk id 2, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 2, Empty_Sublk_Count= 3
+1059 : sublk id 3, vpc 15, ipc 1, epc 0
+1059 : sublk id 4, vpc 15, ipc 1, epc 0
+1059 : sublk id 5, vpc 15, ipc 1, epc 0
+1059 : sublk id 6, vpc 15, ipc 1, epc 0
+1059 : sublk id 7, vpc 15, ipc 1, epc 0
+1059 : sublk id 8, vpc 15, ipc 1, epc 0
+1059 : sublk id 9, vpc 15, ipc 1, epc 0
+1059 : sublk id 10, vpc 16, ipc 0, epc 0
+1059 : sublk id 11, vpc 16, ipc 0, epc 0
+1059 : sublk id 12, vpc 16, ipc 0, epc 0
+1059 : sublk id 13, vpc 16, ipc 0, epc 0
+1059 : sublk id 14, vpc 10, ipc 0, epc 6
+1059 : sublk id 15, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 15, Empty_Sublk_Count= 4
+1066 : blk= 4, Empty_Sublk_Count= 4
+FREE blk id 4 , sublk id 2, sublk vpc 0, ipc 0, epc 16
+1512 Mark Free sublk 0x56230a073860
+1512 blk=4, sublk=3, pg=15
+1037 Mark Free sublk 0x56230a073860
+1037 blk=4, sublk=3, pg=15
+1059 : sublk id 0, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 0, Empty_Sublk_Count= 1
+1059 : sublk id 1, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 1, Empty_Sublk_Count= 2
+1059 : sublk id 2, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 2, Empty_Sublk_Count= 3
+1059 : sublk id 3, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 3, Empty_Sublk_Count= 4
+1059 : sublk id 4, vpc 15, ipc 1, epc 0
+1059 : sublk id 5, vpc 15, ipc 1, epc 0
+1059 : sublk id 6, vpc 15, ipc 1, epc 0
+1059 : sublk id 7, vpc 15, ipc 1, epc 0
+1059 : sublk id 8, vpc 15, ipc 1, epc 0
+1059 : sublk id 9, vpc 15, ipc 1, epc 0
+1059 : sublk id 10, vpc 16, ipc 0, epc 0
+1059 : sublk id 11, vpc 16, ipc 0, epc 0
+1059 : sublk id 12, vpc 16, ipc 0, epc 0
+1059 : sublk id 13, vpc 16, ipc 0, epc 0
+1059 : sublk id 14, vpc 10, ipc 0, epc 6
+1059 : sublk id 15, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 15, Empty_Sublk_Count= 5
+1066 : blk= 4, Empty_Sublk_Count= 5
+FREE blk id 4 , sublk id 3, sublk vpc 0, ipc 0, epc 16
+1512 Mark Free sublk 0x56230a0738c0
+1512 blk=4, sublk=4, pg=15
+1037 Mark Free sublk 0x56230a0738c0
+1037 blk=4, sublk=4, pg=15
+1059 : sublk id 0, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 0, Empty_Sublk_Count= 1
+1059 : sublk id 1, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 1, Empty_Sublk_Count= 2
+1059 : sublk id 2, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 2, Empty_Sublk_Count= 3
+1059 : sublk id 3, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 3, Empty_Sublk_Count= 4
+1059 : sublk id 4, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 4, Empty_Sublk_Count= 5
+1059 : sublk id 5, vpc 15, ipc 1, epc 0
+1059 : sublk id 6, vpc 15, ipc 1, epc 0
+1059 : sublk id 7, vpc 15, ipc 1, epc 0
+1059 : sublk id 8, vpc 15, ipc 1, epc 0
+1059 : sublk id 9, vpc 15, ipc 1, epc 0
+1059 : sublk id 10, vpc 16, ipc 0, epc 0
+1059 : sublk id 11, vpc 16, ipc 0, epc 0
+1059 : sublk id 12, vpc 16, ipc 0, epc 0
+1059 : sublk id 13, vpc 16, ipc 0, epc 0
+1059 : sublk id 14, vpc 10, ipc 0, epc 6
+1059 : sublk id 15, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 15, Empty_Sublk_Count= 6
+1066 : blk= 4, Empty_Sublk_Count= 6
+FREE blk id 4 , sublk id 4, sublk vpc 0, ipc 0, epc 16
+1512 Mark Free sublk 0x56230a073920
+1512 blk=4, sublk=5, pg=15
+1037 Mark Free sublk 0x56230a073920
+1037 blk=4, sublk=5, pg=15
+1059 : sublk id 0, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 0, Empty_Sublk_Count= 1
+1059 : sublk id 1, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 1, Empty_Sublk_Count= 2
+1059 : sublk id 2, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 2, Empty_Sublk_Count= 3
+1059 : sublk id 3, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 3, Empty_Sublk_Count= 4
+1059 : sublk id 4, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 4, Empty_Sublk_Count= 5
+1059 : sublk id 5, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 5, Empty_Sublk_Count= 6
+1059 : sublk id 6, vpc 15, ipc 1, epc 0
+1059 : sublk id 7, vpc 15, ipc 1, epc 0
+1059 : sublk id 8, vpc 15, ipc 1, epc 0
+1059 : sublk id 9, vpc 15, ipc 1, epc 0
+1059 : sublk id 10, vpc 16, ipc 0, epc 0
+1059 : sublk id 11, vpc 16, ipc 0, epc 0
+1059 : sublk id 12, vpc 16, ipc 0, epc 0
+1059 : sublk id 13, vpc 16, ipc 0, epc 0
+1059 : sublk id 14, vpc 10, ipc 0, epc 6
+1059 : sublk id 15, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 15, Empty_Sublk_Count= 7
+1066 : blk= 4, Empty_Sublk_Count= 7
+FREE blk id 4 , sublk id 5, sublk vpc 0, ipc 0, epc 16
+1512 Mark Free sublk 0x56230a073980
+1512 blk=4, sublk=6, pg=15
+1037 Mark Free sublk 0x56230a073980
+1037 blk=4, sublk=6, pg=15
+1059 : sublk id 0, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 0, Empty_Sublk_Count= 1
+1059 : sublk id 1, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 1, Empty_Sublk_Count= 2
+1059 : sublk id 2, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 2, Empty_Sublk_Count= 3
+1059 : sublk id 3, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 3, Empty_Sublk_Count= 4
+1059 : sublk id 4, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 4, Empty_Sublk_Count= 5
+1059 : sublk id 5, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 5, Empty_Sublk_Count= 6
+1059 : sublk id 6, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 6, Empty_Sublk_Count= 7
+1059 : sublk id 7, vpc 15, ipc 1, epc 0
+1059 : sublk id 8, vpc 15, ipc 1, epc 0
+1059 : sublk id 9, vpc 15, ipc 1, epc 0
+1059 : sublk id 10, vpc 16, ipc 0, epc 0
+1059 : sublk id 11, vpc 16, ipc 0, epc 0
+1059 : sublk id 12, vpc 16, ipc 0, epc 0
+1059 : sublk id 13, vpc 16, ipc 0, epc 0
+1059 : sublk id 14, vpc 10, ipc 0, epc 6
+1059 : sublk id 15, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 15, Empty_Sublk_Count= 8
+1066 : blk= 4, Empty_Sublk_Count= 8
+FREE blk id 4 , sublk id 6, sublk vpc 0, ipc 0, epc 16
+1512 Mark Free sublk 0x56230a0739e0
+1512 blk=4, sublk=7, pg=15
+1037 Mark Free sublk 0x56230a0739e0
+1037 blk=4, sublk=7, pg=15
+1059 : sublk id 0, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 0, Empty_Sublk_Count= 1
+1059 : sublk id 1, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 1, Empty_Sublk_Count= 2
+1059 : sublk id 2, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 2, Empty_Sublk_Count= 3
+1059 : sublk id 3, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 3, Empty_Sublk_Count= 4
+1059 : sublk id 4, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 4, Empty_Sublk_Count= 5
+1059 : sublk id 5, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 5, Empty_Sublk_Count= 6
+1059 : sublk id 6, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 6, Empty_Sublk_Count= 7
+1059 : sublk id 7, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 7, Empty_Sublk_Count= 8
+1059 : sublk id 8, vpc 15, ipc 1, epc 0
+1059 : sublk id 9, vpc 15, ipc 1, epc 0
+1059 : sublk id 10, vpc 16, ipc 0, epc 0
+1059 : sublk id 11, vpc 16, ipc 0, epc 0
+1059 : sublk id 12, vpc 16, ipc 0, epc 0
+1059 : sublk id 13, vpc 16, ipc 0, epc 0
+1059 : sublk id 14, vpc 10, ipc 0, epc 6
+1059 : sublk id 15, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 15, Empty_Sublk_Count= 9
+1066 : blk= 4, Empty_Sublk_Count= 9
+FREE blk id 4 , sublk id 7, sublk vpc 0, ipc 0, epc 16
+1512 Mark Free sublk 0x56230a073a40
+1512 blk=4, sublk=8, pg=15
+1037 Mark Free sublk 0x56230a073a40
+1037 blk=4, sublk=8, pg=15
+1059 : sublk id 0, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 0, Empty_Sublk_Count= 1
+1059 : sublk id 1, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 1, Empty_Sublk_Count= 2
+1059 : sublk id 2, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 2, Empty_Sublk_Count= 3
+1059 : sublk id 3, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 3, Empty_Sublk_Count= 4
+1059 : sublk id 4, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 4, Empty_Sublk_Count= 5
+1059 : sublk id 5, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 5, Empty_Sublk_Count= 6
+1059 : sublk id 6, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 6, Empty_Sublk_Count= 7
+1059 : sublk id 7, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 7, Empty_Sublk_Count= 8
+1059 : sublk id 8, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 8, Empty_Sublk_Count= 9
+1059 : sublk id 9, vpc 15, ipc 1, epc 0
+1059 : sublk id 10, vpc 16, ipc 0, epc 0
+1059 : sublk id 11, vpc 16, ipc 0, epc 0
+1059 : sublk id 12, vpc 16, ipc 0, epc 0
+1059 : sublk id 13, vpc 16, ipc 0, epc 0
+1059 : sublk id 14, vpc 10, ipc 0, epc 6
+1059 : sublk id 15, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 15, Empty_Sublk_Count= 10
+1066 : blk= 4, Empty_Sublk_Count= 10
+FREE blk id 4 , sublk id 8, sublk vpc 0, ipc 0, epc 16
+1512 Mark Free sublk 0x56230a073aa0
+1512 blk=4, sublk=9, pg=15
+1037 Mark Free sublk 0x56230a073aa0
+1037 blk=4, sublk=9, pg=15
+1059 : sublk id 0, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 0, Empty_Sublk_Count= 1
+1059 : sublk id 1, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 1, Empty_Sublk_Count= 2
+1059 : sublk id 2, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 2, Empty_Sublk_Count= 3
+1059 : sublk id 3, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 3, Empty_Sublk_Count= 4
+1059 : sublk id 4, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 4, Empty_Sublk_Count= 5
+1059 : sublk id 5, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 5, Empty_Sublk_Count= 6
+1059 : sublk id 6, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 6, Empty_Sublk_Count= 7
+1059 : sublk id 7, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 7, Empty_Sublk_Count= 8
+1059 : sublk id 8, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 8, Empty_Sublk_Count= 9
+1059 : sublk id 9, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 9, Empty_Sublk_Count= 10
+1059 : sublk id 10, vpc 16, ipc 0, epc 0
+1059 : sublk id 11, vpc 16, ipc 0, epc 0
+1059 : sublk id 12, vpc 16, ipc 0, epc 0
+1059 : sublk id 13, vpc 16, ipc 0, epc 0
+1059 : sublk id 14, vpc 10, ipc 0, epc 6
+1059 : sublk id 15, vpc 0, ipc 0, epc 16
+1063 : blk= 4, sublk= 15, Empty_Sublk_Count= 11
+1066 : blk= 4, Empty_Sublk_Count= 11
+FREE blk id 4 , sublk id 9, sublk vpc 0, ipc 0, epc 16
+ 
+After -------------------- 
+Finder2 : 
+Link 0 : Blk 0 -> Blk 1 -> Blk 4 -> Blk 3 -> NULL
+Link 1 : Empty 
+Link 2 : Blk 2 -> NULL
+Link 3 : Empty 
+-------------------- 
+ 
+Free_Block_Management Size 4091
+Temp_Block_Management Size 1
+Temp_Block_Management : Block id 4 -> NULL
