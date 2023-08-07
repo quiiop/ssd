@@ -66,7 +66,6 @@ struct ppa { /* kuo */
             uint64_t ch  : CH_BITS;
             uint64_t rsv : 1;
         } g;
-
         uint64_t ppa;
     };
 };
@@ -81,24 +80,85 @@ struct trim_table {
 
 typedef int nand_sec_status_t;
 
+/*Page的屬性*/
+#define PG_HOT 1 
+#define PG_COLD 0
+#define PG_Empty     0
+#define PG_General   1
+#define PG_Sensitive 2
+/*Hot Level分級*/
+#define Hot_level_0 0
+#define Hot_level_1 1
+#define Hot_level_2 2
+#define Hot_level_3 3
+#define nHotLevel 4
+/*Sublk的屬性*/
+#define SUBLK_VICTIM 0
+#define OLD_LPN 0
+#define NEW_LPN 1
+/*請求Empty Page的目的*/
+#define DO_CopyBack 0
+#define DO_Write 1
+/*自訂義*/
+#define False 0
+#define True 1
+
+
 struct nand_page {
     nand_sec_status_t *sec;
     int nsecs;
     int status;
+    int attribute;  // 停用
+    int Hot_level; // 紀錄這筆Page lba的Hot Level   
+    int pg_type;  // 紀錄這筆Page存的是Genernal or Sensitive lba
 };
+
+
+#define SUBLK_FULL 0
+#define SUBLK_NOT_FULL 1
+#define SUBLK_VICTIM 0
+#define SUBLK_NOT_VICTIM 1
+#define SUBLK_NOT_IN_FINDER1 -1
+#define SUBLK_NOT_IN_FINDER2 -1
 
 struct nand_subblock { /* kuo */
     struct nand_page *pg;
     int npgs;
-    int ipc; /* invalid page count */
-    int vpc; /* valid page count */
+    int ipc; /* invalid page */
+    int vpc; /* valid page*/
+    int epc; /* empty page */
     int erase_cnt;
     int wp; /* current write pointer */
+    int was_full; // sublk是否寫滿了
+    int was_victim; // sublk是否符合GC的條件
+    int Current_Hot_Level; // sublk現在Hot Level
+    uint64_t current_page_id;// 現在在使用哪個Page
+
+    uint64_t ch;
+    uint64_t lun;
+    uint64_t pl;
+    uint64_t blk;
+    uint64_t sublk;
 };
 
+/*-1 表示沒有在Finder裡*/
+#define Blk_Not_In_Finder1 -1
+#define Blk_Not_in_Finder2 -1
 struct nand_block { /* kuo */
     struct nand_subblock *subblk;
-    int nsubblks;
+    int nsubblks; // blk所擁有的sublk總數
+    uint64_t current_sublk_id; // blk現在使用哪個sublk
+    int GC_Sublk_Count; // blk現在有多少符合GC條件的sublk
+    int Not_GC_Sublk_Count; // nsubblks - GC_Sublk_Count
+    int In_Finder1_Position; // blk在Finder1的位置
+    int In_Finder2_Position; // blk在Finder2的位置
+    int invalid_sublk; //停用
+    int full_sublk; //停用
+    
+    uint64_t ch;
+    uint64_t lun;
+    uint64_t pl;
+    uint64_t blk;
 };
 
 struct nand_plane {
@@ -173,6 +233,15 @@ struct ssdparams {
     int tt_pls;       /* total # of planes in the SSD */
 
     int tt_luns;      /* total # of LUNs in the SSD */
+
+    
+    /* sublk gc */
+    int valid_page;
+    int invalid_page;
+
+    double sublk_gc_thres_percent;
+    int sublk_gc_thres_pgs;
+
 };
 
 typedef struct line {
@@ -214,6 +283,52 @@ struct nand_cmd {
     int cmd;
     int64_t stime; /* Coperd: request arrival time */
 };
+
+struct node{
+    struct nand_block *blk;
+    struct node *next;
+};
+
+struct link
+{
+    int id;
+    struct node *head;
+    struct node *tail;
+};
+
+#define Finder1_ID 1
+struct Finder{
+    int id;
+    int size;
+    struct link *list;
+    void (*Show_Finder)(int);
+};
+
+#define Finder2_ID 2
+struct Finder2{
+    int id;
+    int size;
+    struct link *list;
+    void (*Show_Finder)(int);
+};
+
+#define Fail 0;
+#define Successful 1
+struct Queue{
+    int id;
+    int Queue_Size;
+    struct node *head;
+    struct node *tail;
+
+    /*
+    int (*Push)(struct nand_block*);
+    int (*Pop)();
+    int (*Size)();
+    struct nand_block* (*Peek)();
+    void (*Show)();
+    */ 
+};
+
 
 struct ssd {
     char *ssdname;
