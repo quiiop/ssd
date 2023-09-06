@@ -91,7 +91,9 @@ typedef int nand_sec_status_t;
 #define Hot_level_1 1
 #define Hot_level_2 2
 #define Hot_level_3 3
-#define nHotLevel 4
+#define Hot_level_4 4 
+#define Max_Level 4
+#define nHotLevel 5
 /*Sublk的屬性*/
 #define SUBLK_VICTIM 0
 #define OLD_LPN 0
