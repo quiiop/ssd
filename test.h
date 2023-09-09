@@ -75,5 +75,41 @@ static void Test2(struct ssd *ssd, FILE *outfile)
     fprintf(outfile, "--------------------------------------\n");
     Print_Finder(outfile, 2);
 }
+
+static void Test3(struct ssd *ssd, FILE *outfile)
+{   
+    NvmeRequest req;
+
+    printf("1931\n");
+    fprintf(outfile, "Free Block Management Size %d\n", Free_Block_Management->Queue_Size);
+    uint64_t slba = 0;
+    uint64_t nlb = 64;
+    for (int i=0; i<256; i++){
+        slba = slba + nlb;
+        req.slba = slba;
+        req.nlb = nlb;
+        ssd_write(ssd, &req);
+    }
+    fprintf(outfile, "Free Block Management Size %d\n", Free_Block_Management->Queue_Size);
+
+    
+    req.slba = 1000;
+    req.nlb = 4096;
+    ssd_write(ssd, &req);
+    fprintf(outfile, "Free Block Management Size %d\n", Free_Block_Management->Queue_Size);
+
+   
+    req.slba = 0;
+    req.nlb = 1600;
+    ssd_write(ssd, &req);
+    fprintf(outfile, "Free Block Management Size %d\n", Free_Block_Management->Queue_Size);
+
+
+    fprintf(outfile, "--------------------------------------\n");
+    Print_Finder(outfile, 1);
+    Print_Finder(outfile, 2);
+    fprintf(outfile, "--------------------------------------\n");
+}
+
 */
 
