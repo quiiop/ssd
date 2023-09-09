@@ -101,6 +101,11 @@ typedef int nand_sec_status_t;
 /*請求Empty Page的目的*/
 #define DO_CopyBack 0
 #define DO_Write 1
+#define Sensitive_Write 2
+#define General_Write 3
+#define Lived_Page_General 4
+#define Lived_Page_Sensitive 5
+#define No_CopyWrite 6
 /*自訂義*/
 #define False 0
 #define True 1
@@ -151,7 +156,8 @@ struct nand_block { /* kuo */
     int nsubblks; // blk所擁有的sublk總數
     uint64_t current_sublk_id; // blk現在使用哪個sublk
     int GC_Sublk_Count; // blk現在有多少符合GC條件的sublk
-    int Not_GC_Sublk_Count; // nsubblks - GC_Sublk_Count
+    int Free_Sublk_Count; // nsubblks - GC_Sublk_Count
+    
     int In_Finder1_Position; // blk在Finder1的位置
     int In_Finder2_Position; // blk在Finder2的位置
     int invalid_sublk; //停用
