@@ -36,6 +36,8 @@ const char* fileName30 = "Write_Cnt_Record.txt";
 const char* fileName31 = "workload.txt";
 const char* fileName32 = "Test_Record.txt";
 const char* fileName33 = "space.txt";
+const char* fileName34 = "finder_record.txt";
+const char* fileName35 = "victim_sublk_record.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -70,11 +72,12 @@ FILE *outfile30 = NULL;
 FILE *outfile31 = NULL;
 FILE *outfile32 = NULL;
 FILE *outfile33 = NULL;
+FILE *outfile34 = NULL;
+FILE *outfile35 = NULL;
 //#define FEMU_DEBUG_FTL
 
 static uint64_t WRITE_COUNT = 0;
 
-static float table_cnt_avg = 0;
 //static bool wp_2 = false;
 static uint64_t read_cnt = 0;
 static uint64_t gcc_count = 0;
@@ -97,6 +100,9 @@ static struct Queue *Temp_Block_Management=NULL; //用來暫存尚未存到Finde
 static void *ftl_thread(void *arg);
 
 static int Test_Count = 0;
+static uint64_t Total_Page = 0;
+static uint64_t Free_Page = 0;
+static int key = 1;
 
 
 static inline bool should_gc_sublk(struct ssd *ssd)
@@ -112,11 +118,15 @@ static inline bool should_gc_sublk(struct ssd *ssd)
    //int GC_Threshold = 0.5;
    //int GC_Threshold_Blk_Count = (ssd->sp.nchs * ssd->sp.blks_per_ch) * GC_Threshold;
    // printf("Queue_Size = %d\n", Free_Block_Management->Queue_Size);
-   if (Free_Block_Management->Queue_Size < 2048){ //total 4096 blks
+   
+   //printf("120\n");
+   uint64_t threshold = Total_Page *  0.5;
+   if (Free_Page < threshold){ //total 4096 blks
         return true;
    }else{
         return false;
    }
+   //printf("127\n");
 }
 
 static inline struct ppa get_maptbl_ent(struct ssd *ssd, uint64_t lpn)
@@ -221,7 +231,7 @@ static void Add_Link(struct link *list, struct node *n)
     }
 }
 
-static int Remove_Node(struct link *list, struct node *n)
+static int Remove_Node(struct link *list, struct nand_block *blk)
 {
     struct node *current;
     struct node *prevoius; 
@@ -232,7 +242,7 @@ static int Remove_Node(struct link *list, struct node *n)
     }
     prevoius = list->head;
     for(current=list->head; current!=NULL; current=current->next){
-        if(current->blk == n->blk){
+        if(current->blk == blk){
             is_find = 1;
             break;
         }else{
@@ -259,7 +269,7 @@ static int Add_Finder1(struct nand_block *blk, int Old_Position, int New_Positio
     if(Old_Position==-1 && New_Position==0){
         Add_Link(&finder->list[New_Position], n);
     }else{
-        Remove_Node(&finder->list[Old_Position], n);
+        Remove_Node(&finder->list[Old_Position], blk);
         Add_Link(&finder->list[New_Position], n);
     }
     return 1;
@@ -273,7 +283,7 @@ static int Add_Finder2(struct nand_block *blk, int Old_Hot_Level, int New_Hot_Le
     if(Old_Hot_Level == Blk_Not_in_Finder2){
         Add_Link(&finder2->list[New_Hot_Level], n);
     }else{
-        Remove_Node(&finder2->list[Old_Hot_Level], n);
+        Remove_Node(&finder2->list[Old_Hot_Level], blk);
         Add_Link(&finder2->list[New_Hot_Level], n);
     }
     return 1;
@@ -282,9 +292,7 @@ static int Add_Finder2(struct nand_block *blk, int Old_Hot_Level, int New_Hot_Le
 
 static void Remove_Blk_InFinder2(struct nand_block *blk, int Hot_Level)
 {
-    struct node *n = init_node(blk);
-    Remove_Node(&finder2->list[Hot_Level], n);
-    free(n);
+    Remove_Node(&finder2->list[Hot_Level], blk);
 }
 
 /* Queue Operation */
@@ -427,7 +435,7 @@ static void ssd_init_params(struct ssdparams *spp)
     spp->secs_per_line = spp->pgs_per_line * spp->secs_per_pg;
     spp->tt_lines = spp->blks_per_lun; /* TODO: to fix under multiplanes */
 
-    printf("total line %d\n", spp->tt_lines);
+    //printf("total line %d\n", spp->tt_lines);
     spp->gc_thres_pcent = 0.75; // 0.75
     spp->gc_thres_lines = (int)((1 - spp->gc_thres_pcent) * spp->tt_lines);
     spp->gc_thres_pcent_high = 0.95;
@@ -441,6 +449,10 @@ static void ssd_init_params(struct ssdparams *spp)
     spp->sublk_gc_thres_pgs = (int)( (1 - spp->sublk_gc_thres_percent) * spp->tt_pgs);
 
     check_params(spp);
+
+    /* Total Page */
+    Total_Page = spp->nchs * spp->blks_per_ch * spp->pgs_per_blk;
+    Free_Page = Total_Page;
 }
 
 static void ssd_init_nand_page(struct nand_page *pg, struct ssdparams *spp)
@@ -1045,6 +1057,7 @@ static void mark_page_valid(struct ssd *ssd, struct ppa *ppa)
 
     ssd->sp.valid_page++;
     tt_vpc = tt_vpc +1;
+    Free_Page--;
 }
 
 static int Check_All_Sublk_IsEmpty(struct ssd *ssd, struct nand_block *blk)
@@ -1072,6 +1085,7 @@ static void mark_subblock_free(struct ssd *ssd, struct ppa *ppa)
         pg->status = PG_FREE;
         pg->Hot_level = Hot_level_0;
         pg->pg_type = PG_Empty;
+        Free_Page++;
     }
     struct nand_block *blk = get_blk(ssd, ppa);
     int Sublk_Full_count = 0;
@@ -1101,10 +1115,10 @@ static void mark_subblock_free(struct ssd *ssd, struct ppa *ppa)
     
     /*計算blk在Finder1的位置*/
     if (Victim_Sublk_Count == 0){
-        struct node *n = init_node(blk);
+        //struct node *n = init_node(blk);
         int Old_Position = blk->In_Finder1_Position;
-        Remove_Node(&finder->list[Old_Position], n);
-        free(n);
+        Remove_Node(&finder->list[Old_Position], blk);
+        //free(n);
         //fprintf(outfile26, "1094\n"); 
     }else{
          int New_Position = Victim_Sublk_Count -1;
@@ -1215,7 +1229,7 @@ static struct ppa *get_Empty_pg_from_Finder2(struct ssd *ssd, int Hot_Level)
     if (sublk!=NULL){
         // printf("Sublk : ipc %d, vpc %d, epc %d, Hot_Level %d, Page_id %ld\n", sublk->ipc, sublk->vpc, sublk->epc, sublk->Current_Hot_Level, sublk->current_page_id);
         for (int i=0; i<spp->pgs_per_subblk; i++){
-            if (sublk->pg[i].status == PG_FREE){
+            if ((sublk->pg[i]).status == PG_FREE){
                 empty_ppa->g.ch = sublk->ch;
                 empty_ppa->g.lun = sublk->lun;
                 empty_ppa->g.pl = sublk->pl;
@@ -1237,173 +1251,135 @@ static struct ppa *get_Empty_pg_from_Finder2(struct ssd *ssd, int Hot_Level)
 
 static struct nand_block *find_blk_from_Finder1(struct ssd *ssd)
 {
+    // printf("1250\n");
     struct ssdparams *spp = &ssd->sp;
     int nlinks = spp->subblks_per_blk; //16
     for(int i=nlinks-1; i>=0; i--){
+        // printf("1254\n");
         struct link *list = &finder->list[i];
-        struct node *current;
-        for (current=list->head; current->next!=NULL; current=current->next){
-            struct nand_block *target_block = current->blk;
-            if (target_block->Free_Sublk_Count > 0){
-                return target_block;
+        // printf("1256\n");
+        if (list->head!=NULL){
+            struct node *current;
+            for (current=list->head; current->next!=NULL; current=current->next){
+                // printf("1259\n");
+                struct nand_block *target_block = current->blk;
+                // printf("1261\n");
+                for (int k=0; k<spp->subblks_per_blk; k++){
+                    struct nand_subblock *sublk = &(target_block->subblk[k]);
+                    if (sublk->was_full != SUBLK_FULL){
+                        for (int k2=0; k2<spp->pgs_per_subblk; k2++){
+                            struct nand_page *pg = &sublk->pg[k2];
+                            if (pg->status == PG_FREE){
+                                return target_block;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
+    // printf("1263\n");
     return NULL;
 }
 
-static struct ppa *get_empty_page(struct ssd *ssd, int Hot_Level, int condition, int condition2)
+static struct ppa *Get_Empty_Page_For_General_LPN(struct ssd *ssd, int Hot_Level)
 {
-    struct ssdparams *spp = &ssd->sp;
-    struct ppa *empty_pg = NULL;
-    int find = 1;
+    //printf("1423\n");
+    // struct ssdparams *spp = &ssd->sp;
+    struct ppa *temp_ppa = NULL;
+    struct ppa *empty_pg = malloc(sizeof(struct ppa));
 
-    if (condition==DO_Write || General_Write){
-        struct nand_block *blk = NULL;
-        empty_pg = malloc(sizeof(struct ppa));
-        struct ppa *temp_ppa = NULL;
+    //printf("1428\n");
+    temp_ppa = get_Empty_pg_from_Finder2(ssd, Hot_Level);
+    //printf("1430\n");
 
-        if (condition2 == No_CopyWrite){
-            if(Hot_Level==-1){
-                Hot_Level = 0;
-                temp_ppa = get_Empty_pg_from_Finder2(ssd, Hot_Level);
-            }else{
-                int New_Hot_level = Hot_Level +1;
-                if (New_Hot_level>(nHotLevel-1)){
-                    temp_ppa = get_Empty_pg_from_Finder2(ssd, Hot_Level);
-                }else{
-                    temp_ppa = get_Empty_pg_from_Finder2(ssd, New_Hot_level);
+    if (temp_ppa == NULL){
+        if (Free_Block_Management->Queue_Size!=0){
+                //printf("1288\n");
+                struct nand_block *blk = Peek(Free_Block_Management);
+                //printf("1290\n");
+                Pop(Free_Block_Management);
+                //printf("1292\n");
+                /*從Free_Block_Management取得的Block裡面的sublk、page都是empty，所以取地empty page都是從sublk0、page0開始*/
+                if (blk==NULL){
+                    printf("1490 err\n");
                 }
-            }
-        }
-
-        if (temp_ppa == NULL || condition2 == Lived_Page_General || condition2 == Lived_Page_Sensitive){
-            if (Temp_Block_Management->Queue_Size!=0){
-                // printf("1152 : Temp_Block_Management size %d\n", Temp_Block_Management->Queue_Size);
-                blk = Peek(Temp_Block_Management);
                 empty_pg->g.ch = blk->ch;
                 empty_pg->g.lun = blk->lun;
                 empty_pg->g.pl = blk->pl;
                 empty_pg->g.blk = blk->blk;
-                for (int i=0; i<spp->subblks_per_blk; i++){
-                    int is_find = False;
-                    struct nand_subblock *sublk = &blk->subblk[i];
-                    if (sublk->epc !=0){
-                        for (int j=0; j<spp->pgs_per_subblk; j++){
-                            struct nand_page *pg = &sublk->pg[j];
-                            if (pg->status == PG_FREE){
-                                empty_pg->g.subblk = i;
-                                empty_pg->g.pg = j;
-                                is_find = True;
-                                break;
-                            }
-                        }
-                    }
-                    if (is_find==True){
-                        break;
-                    }
-                }
-                if(empty_pg->g.subblk == (spp->subblks_per_blk-1) && empty_pg->g.pg == (spp->pgs_per_subblk-1)){
-                    Pop(Temp_Block_Management);
-                }
+                empty_pg->g.subblk = 0;
+                empty_pg->g.pg = 0;
+                //printf("1496\n");
+                Push(Temp_Block_Management, blk);
+                //printf("1498\n");
                 /*紀錄blk現在使用哪個sublk，紀錄sublk現在使用哪個page*/
                 blk->current_sublk_id = empty_pg->g.subblk;
                 blk->subblk[blk->current_sublk_id].current_page_id = empty_pg->g.pg;
-            }else{
-                if (Free_Block_Management->Queue_Size!=0){
-                    // printf("1183 : Free_Block_Management size %d\n", Free_Block_Management->Queue_Size);
-                    blk = Peek(Free_Block_Management);
-                    Pop(Free_Block_Management);
-                    /*從Free_Block_Management取得的Block裡面的sublk、page都是empty，所以取地empty page都是從sublk0、page0開始*/
-                    empty_pg->g.ch = blk->ch;
-                    empty_pg->g.lun = blk->lun;
-                    empty_pg->g.pl = blk->pl;
-                    empty_pg->g.blk = blk->blk;
-                    empty_pg->g.subblk = 0;
-                    empty_pg->g.pg = 0;
-                    Push(Temp_Block_Management, blk);
-                    /*紀錄blk現在使用哪個sublk，紀錄sublk現在使用哪個page*/
-                    blk->current_sublk_id = empty_pg->g.subblk;
-                    blk->subblk[blk->current_sublk_id].current_page_id = empty_pg->g.pg;
-                }else{
-                    find = 0;
-                    printf("SSD space not enough !!\n");
-                }
-            }
-        }else{
-            *empty_pg = *temp_ppa;
-        }
-    }else if(condition == DO_CopyBack){
-        if (condition2 == Lived_Page_Sensitive){
-            struct nand_block *blk = find_blk_from_Finder1(ssd);
-            if (blk!=NULL){
-                empty_pg->g.ch = blk->ch;
-                empty_pg->g.lun = blk->lun;
-                empty_pg->g.pl = blk->pl;
-                empty_pg->g.blk = blk->blk;
-                for (int k=0; k<spp->subblks_per_blk; k++){
-                    if (blk->subblk[k].was_full != SUBLK_FULL){
-                        struct nand_subblock *sublk = &blk->subblk[k];
-                        for (int m=0 ;m<spp->pgs_per_subblk; m++){
-                            if (sublk->pg[m].status == PG_FREE){
-                                empty_pg->g.subblk = sublk->sublk;
-                                empty_pg->g.pg = m;
-                                return empty_pg;
-                            }
-                        }
-                    }
-                }
-            }else{
-                empty_pg = get_empty_page(ssd, Hot_Level, DO_Write, Lived_Page_Sensitive);
-                return empty_pg;
-            }
-        }else{
-            empty_pg = get_Empty_pg_from_Finder2(ssd, Hot_Level);
-            /*紀錄blk現在使用哪個sublk，紀錄sublk現在使用哪個page*/
-            if (empty_pg != NULL){
-                //printf("1219\n");
-                struct nand_block *blk = get_blk(ssd, empty_pg);
-                blk->current_sublk_id = empty_pg->g.subblk;
-                blk->subblk[blk->current_sublk_id].current_page_id = empty_pg->g.pg;
-            }else{
-                empty_pg = get_empty_page(ssd, Hot_Level, DO_Write, Lived_Page_General);
-                if (empty_pg == NULL){
-                    find  = 0;
-                }
-            }
-        }
-    }else if(condition == Sensitive_Write){
-        struct nand_block *blk = find_blk_from_Finder1(ssd);
-        if (blk!=NULL){
-            empty_pg->g.ch = blk->ch;
-            empty_pg->g.lun = blk->lun;
-            empty_pg->g.pl = blk->pl;
-            empty_pg->g.blk = blk->blk;
-            for (int k=0; k<spp->subblks_per_blk; k++){
-                if (blk->subblk[k].was_full != SUBLK_FULL){
-                    struct nand_subblock *sublk = &blk->subblk[k];
-                    for (int m=0 ;m<spp->pgs_per_subblk; m++){
-                        if (sublk->pg[m].status == PG_FREE){
-                            empty_pg->g.subblk = sublk->sublk;
-                            empty_pg->g.pg = m;
-                            return empty_pg;
-                        }
-                    }
-                }
-            }
-        }else{
-            empty_pg = get_empty_page(ssd, Hot_Level, DO_Write, Lived_Page_Sensitive);
-            return empty_pg;
-        }
-    }else{
-        printf("no provide condition \n");
-    }
 
-    if (find==0){
-        return NULL;
+                //printf("1501\n");
+                return empty_pg;
+        }else{
+                free(empty_pg);
+                return NULL;
+        }
     }else{
+        //printf("1495\n");
+        //printf("finder2 find page\n");
+        *empty_pg = *temp_ppa;
         return empty_pg;
     }
+}
+
+static struct ppa *Get_Empty_Page_For_Sensitive_LPN(struct ssd *ssd, int Hot_Level)
+{
+    //printf("1472\n");
+    struct nand_block *blk = find_blk_from_Finder1(ssd);
+    //printf("1474\n");
+    struct ppa *empty_pg = malloc(sizeof(struct ppa));
+    struct ssdparams *spp = &ssd->sp;
+    //printf("1476\n");
+    if (blk!=NULL){
+        //printf("blk id %lu, finder1 pos %d\n", blk->blk, blk->In_Finder1_Position);
+        empty_pg->g.ch = blk->ch;
+        empty_pg->g.lun = blk->lun;
+        empty_pg->g.pl = blk->pl;
+        empty_pg->g.blk = blk->blk;
+        for (int k=0; k<spp->subblks_per_blk; k++){
+            //printf("sublk id %lu, ipc %d, vpc %d\n", blk->subblk[k].sublk, blk->subblk[k].ipc, blk->subblk[k].vpc);
+            if (blk->subblk[k].was_full != SUBLK_FULL){
+                //printf("1484\n");
+                struct nand_subblock *sublk = &blk->subblk[k];
+                //printf("1486\n");
+                for (int m=0 ;m<spp->pgs_per_subblk; m++){
+                    struct nand_page *pg = &sublk->pg[m];
+                    //printf("1349 pg statue %d\n", pg->status);
+                    if (pg->status == PG_FREE){
+                        empty_pg->g.subblk = sublk->sublk;
+                        empty_pg->g.pg = m;
+                        return empty_pg;
+                    }
+                }
+                //printf("1494\n");
+            }
+        }
+        printf("1493 err\n");
+        return NULL;
+    }else{
+        //printf("1500\n");
+        struct ppa *temp_ppa = Get_Empty_Page_For_General_LPN(ssd, Hot_Level);
+        if (temp_ppa == NULL){
+            free(empty_pg);
+            printf("1494 err\n");
+            return NULL;
+        }else{
+            *empty_pg = *temp_ppa;
+            free(temp_ppa);
+            return empty_pg;
+        }
+        //printf("1511\n");
+    }
+    //printf("1508\n");
 }
 
 static int Print_Sublk(struct ppa *ppa, struct nand_page *pg_iter)
@@ -1422,44 +1398,64 @@ static int Print_Sublk(struct ppa *ppa, struct nand_page *pg_iter)
 /* here ppa identifies the block we want to clean */
 static int clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req)
 {
+    //printf("1387\n");
     struct ssdparams *spp = &ssd->sp;
     struct nand_page *pg_iter = NULL;
     int cnt = 0; //計算sublk有多少valid pg
     
+    //printf("1392\n");
+    //struct nand_block *blk = get_blk(ssd, ppa);
     struct nand_subblock *sublk = get_subblk(ssd, ppa);
+    //printf("1394\n");
     double n = 0;
     if (sublk->vpc == 0){
         n = (sublk->ipc + sublk->vpc) / 1;
     }else{
         n = (sublk->ipc + sublk->vpc) / sublk->vpc;
     }
+    //printf("1401\n");
     fprintf(outfile33, "%f\n", n);
+    //printf("1403\n");
 
     for (int pg = 0; pg < spp->pgs_per_subblk; pg++) {
         ppa->g.pg = pg;
+        //printf("1407\n");
         pg_iter = get_pg(ssd, ppa);
+        //printf("1409\n");
         /* there shouldn't be any free page in victim blocks */
+        //printf("1411\n");
         Print_Sublk(ppa, pg_iter);
+        //printf("1413\n");
 
         if (pg_iter->status == PG_VALID) { 
+            //printf("1416\n");
             gc_read_page(ssd, ppa);
+            //printf("1418\n");
             struct ppa *empty_ppa;
             if (pg_iter->pg_type == PG_Sensitive){
-                empty_ppa = get_empty_page(ssd, pg_iter->Hot_level, DO_CopyBack, Lived_Page_Sensitive); 
+                //printf("1419\n");
+                empty_ppa = Get_Empty_Page_For_Sensitive_LPN(ssd, pg_iter->Hot_level);
+                //printf("1423\n");
             }else{
-                empty_ppa = get_empty_page(ssd, pg_iter->Hot_level, DO_CopyBack, Lived_Page_General); 
+                //printf("1425\n");
+                empty_ppa = Get_Empty_Page_For_General_LPN(ssd, pg_iter->Hot_level);
+                //printf("1427\n");
             }
+            //printf("1429\n");
             gc_write_page(ssd, ppa, empty_ppa, pg_iter->Hot_level);
+            //printf("1431\n");
             fprintf(outfile32, "GC Original valid : ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d, Hot_level= %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl ,ppa->g.blk, ppa->g.subblk, ppa->g.pg, pg_iter->Hot_level);
             struct nand_page *pg = get_pg(ssd, empty_ppa);
             fprintf(outfile32, "GC New valid      : ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d, Hot_Levle= %d\n", empty_ppa->g.ch, empty_ppa->g.lun, empty_ppa->g.pl ,empty_ppa->g.blk, empty_ppa->g.subblk, empty_ppa->g.pg, pg->Hot_level);
             cnt++;
+            //printf("1436\n");
         }
     }
     fprintf(outfile29, "%d\n", cnt);
     ftl_assert(get_subblk(ssd, ppa)->vpc == cnt)
     //printf("valid pg %d, invalid pg %d\n", cnt, (spp->pgs_per_subblk-cnt));
     //printf("1457\n");
+    //printf("1426\n");
     return 0;
 }
 
@@ -1477,10 +1473,10 @@ static int do_gc(struct ssd *ssd, bool force, NvmeRequest *req)
     victim_blk = Get_Victim_Block(ssd);
     if (victim_blk == NULL){
         printf("No Victim Blk\n");
-        fprintf(outfile32, "No Victim Blk\n");
+        //fprintf(outfile32, "No Victim Blk\n");
         return -1;
     }else{
-        fprintf(outfile32, "GC blk= %lu\n", victim_blk->blk);
+        //fprintf(outfile32, "GC blk= %lu\n", victim_blk->blk);
     }
 
     ppa.g.ch = victim_blk->ch;
@@ -1556,6 +1552,7 @@ static uint64_t ssd_read(struct ssd *ssd, NvmeRequest *req)
 
 static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table, int sensitive_lpn_count, int temp_lpn_count)
 {
+    //printf("1521\n");
     struct ssdparams *spp = &ssd->sp; 
     int index = 0;
     //printf("1536\n");
@@ -1579,23 +1576,7 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
             }
         }
     }
-    //printf("1557\n");
-
-    fprintf(outfile32, "--------------------------------\n");
-    fprintf(outfile32, "secure_deletion_table\n");
-    for(int i=0; i<sensitive_lpn_count; i++){
-        struct nand_subblock *temp_sublk = get_subblk(ssd, &secure_deletion_table[i]);
-        fprintf(outfile32, "sublk %p ,PPA blk= %d, sublk= %d, pg= %d\n",temp_sublk, (&secure_deletion_table[i])->g.blk, (&secure_deletion_table[i])->g.subblk, (&secure_deletion_table[i])->g.pg);
-        //printf("1579 sublk %p ,PPA blk= %d, sublk= %d, pg= %d\n",temp_sublk, (&secure_deletion_table[i])->g.blk, (&secure_deletion_table[i])->g.subblk, (&secure_deletion_table[i])->g.pg);
-    }
-    fprintf(outfile32, "table\n");
-    for(int i=0; i<index; i++){
-        struct nand_subblock *temp_sublk = get_subblk(ssd, &table[i]);
-        fprintf(outfile32, "sublk %p ,PPA blk= %d, sublk= %d, pg= %d\n",temp_sublk, (&table[i])->g.blk, (&table[i])->g.subblk, (&table[i])->g.pg);
-        //printf("1586 sublk %p ,PPA blk= %d, sublk= %d, pg= %d\n",temp_sublk, (&table[i])->g.blk, (&table[i])->g.subblk, (&table[i])->g.pg);
-    }
-    fprintf(outfile32, "--------------------------------\n");
-    
+    //printf("1545\n");
     for (int i=0; i<index; i++){
         //printf("1577\n");
         ///printf("1593 PPA blk= %d, sublk= %d, pg= %d\n",(&table[i])->g.blk, (&table[i])->g.subblk, (&table[i])->g.pg);
@@ -1610,25 +1591,30 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
                     count++;
                 }
             }
+            //printf("1560\n");
             struct ppa sublk_ppa;
             sublk_ppa.g.ch = blk->ch;
             sublk_ppa.g.lun = blk->lun;
             sublk_ppa.g.pl = blk->pl;
             sublk_ppa.g.blk = blk->blk;
-            fprintf(outfile32, "GC Blk %lu\n", blk->blk);
+            //fprintf(outfile32, "GC Blk %lu\n", blk->blk);
+            //printf("1567\n");
             if (count == spp->subblks_per_blk){
                 for (int k=0; k<spp->subblks_per_blk; k++){
                     sublk_ppa.g.subblk = k;
-                    fprintf(outfile32, "GC Sublk %d, vpc %d, ipc %d\n", k, blk->subblk[k].vpc, blk->subblk[k].ipc);
+                    //fprintf(outfile32, "GC Sublk %d, vpc %d, ipc %d\n", k, blk->subblk[k].vpc, blk->subblk[k].ipc);
                     //printf("1600\n");
+                    //printf("1573\n");
                     clean_one_subblock(ssd, &sublk_ppa, NULL);
+                    //printf("1574\n");
                     //printf("1602\n");
                 }
+                //printf("1576\n");
             }else{
                 for (int k=0; k<spp->subblks_per_blk; k++){
                     sublk_ppa.g.subblk = k;
                     if (blk->subblk[k].was_victim == SUBLK_VICTIM){
-                        fprintf(outfile32, "GC Sublk %d, vpc %d, ipc %d\n", k, blk->subblk[k].vpc, blk->subblk[k].ipc);
+                        //fprintf(outfile32, "GC Sublk %d, vpc %d, ipc %d\n", k, blk->subblk[k].vpc, blk->subblk[k].ipc);
                         //printf("1609\n");
                         clean_one_subblock(ssd, &sublk_ppa, NULL);
                         //printf("1611\n");
@@ -1646,15 +1632,17 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
             //printf("1623\n");
         }
     }
+    //printf("1596\n");
     //printf("1625\n");
     free(table);
     //printf("1627\n");
+    //printf("1600\n");
     return 0;
 }
 
 static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 {
-    // printf("1615\n");
+    //printf("1615\n");
     uint64_t lba = req->slba;
     struct ssdparams *spp = &ssd->sp;
     int len = req->nlb;
@@ -1703,14 +1691,16 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     // printf("1661\n");
     WRITE_COUNT++;
 
-    if (WRITE_COUNT == 30){
+    if (WRITE_COUNT == 10){
         check = 1;
         WRITE_COUNT = 0;
     }else{
         check = 0;
     }
 
-    printf("Free Block %d\n", Free_Block_Management->Queue_Size);
+    //printf("Free Block %d\n", Free_Block_Management->Queue_Size);
+    //printf("Free Page %lu\n", Free_Page);
+    //printf("start_lpn %lu, end_lpn %lu\n", start_lpn, end_lpn);
     for (lpn = start_lpn; lpn <= end_lpn; lpn++){
         // fprintf(outfile26, "LBA %lu\n", lba);
         int original_hot_level = -1; //lba原本的Hot Level
@@ -1726,9 +1716,9 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
             struct nand_page *pg = get_pg(ssd, &ppa);
             // printf("1684\n");
             if (pg->status != PG_INVALID){
-                // printf("1686\n");
+                //printf("1686\n");
                 mark_page_invalid(ssd, &ppa, req);
-                // printf("1688\n");
+                //printf("1688\n");
             }
             // printf("1690\n");
             set_rmap_ent(ssd, INVALID_LPN, &ppa);
@@ -1740,8 +1730,9 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
                 // printf("1697\n");
                 secure_deletion_table[sensitive_lpn_count] = ppa;
                 fprintf(outfile32, "invalid sensitive lpn %lu, ch= %d, lun= %d, pl= %d, blk= %d, sublk= %d, pg= %d\n", lpn, ppa.g.ch, ppa.g.lun, ppa.g.pl, ppa.g.blk, ppa.g.subblk, ppa.g.pg);
-                // printf("1699\n");
+                //printf("1699\n");
                 struct nand_subblock *sublk = get_subblk(ssd, &ppa);
+                //printf("1692\n");
                 sublk->was_victim = SUBLK_VICTIM;
                 sensitive_lpn_count++;
                 is_need_secure_deletion = 1;
@@ -1749,19 +1740,37 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         }else{
 			is_new_Lpn = NEW_LPN;
 		}
-        //printf("1697\n");
+        while (should_gc_sublk(ssd)) {
+            //printf("1729\n");
+            int r = do_gc(ssd, true, req);
+            //printf("1731\n");
+            if (r == -1){
+                break;
+            }
+        }
+       // printf("1736\n");
 
         /*1. 先申請一個Empty PPA*/
         int New_Hot_Level = original_hot_level+1;
         struct ppa *empty_ppa = NULL;
         if (check == 1){ // sensitive LPN
-            // printf("1712\n");
-            empty_ppa = get_empty_page(ssd, original_hot_level, Sensitive_Write, No_CopyWrite);
-            // printf("1714\n");
+            //printf("1858\n");
+            empty_ppa = Get_Empty_Page_For_Sensitive_LPN(ssd, New_Hot_Level);
+            //printf("1860\n");
+            //fprintf(outfile32, "Sensitive LPN %lu, Empty Page: ch= %d, lun= %d, pl= %d, blk= %d, sublk= %d, pg= %d\n", lpn, empty_ppa->g.ch, empty_ppa->g.lun, empty_ppa->g.pl, empty_ppa->g.blk, empty_ppa->g.subblk, empty_ppa->g.pg);
         }else{
-            // printf("1716\n");
-            empty_ppa = get_empty_page(ssd, original_hot_level, General_Write, No_CopyWrite);
-            // printf("1718\n");
+            //printf("1716\n");
+            empty_ppa = Get_Empty_Page_For_General_LPN(ssd, New_Hot_Level);
+            //printf("1713\n");
+            //fprintf(outfile32, "General LPN %lu, Empty Page: ch= %d, lun= %d, pl= %d, blk= %d, sublk= %d, pg= %d\n", lpn, empty_ppa->g.ch, empty_ppa->g.lun, empty_ppa->g.pl, empty_ppa->g.blk, empty_ppa->g.subblk, empty_ppa->g.pg);
+        }
+        //printf("1744\n");
+        if (empty_ppa == NULL){
+            printf("no empty page\n");
+            printf("Free Block %d, Free Page %lu\n",Free_Block_Management->Queue_Size, Free_Page);
+            Print_Finder(outfile34, 1);
+            Print_Finder(outfile34, 2);
+            fclose(outfile34);
         }
         ppa = *empty_ppa;
         free(empty_ppa);
@@ -1777,17 +1786,16 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         // printf("1731\n");
 		if (check == 1){
 			new_pg->pg_type = PG_Sensitive;
-            fprintf(outfile32, "valid sensitive lpn %lu, ch= %d, lun= %d, pl= %d, blk= %d, sublk= %d, pg= %d\n", lpn, ppa.g.ch, ppa.g.lun, ppa.g.pl, ppa.g.blk, ppa.g.subblk, ppa.g.pg);
 		}else{
 			new_pg->pg_type = PG_General;
 		}
 
         /*3. 更新Lba的Hot level*/
 		if(is_new_Lpn == NEW_LPN){ // new lpn
-            fprintf(outfile27, "New lpn %lu\n", lpn);
+            //fprintf(outfile27, "New lpn %lu\n", lpn);
 			new_pg->Hot_level = Hot_level_0;
 		}else{
-            fprintf(outfile27, "Old lpn %lu\n", lpn);
+            //fprintf(outfile27, "Old lpn %lu\n", lpn);
 			if (New_Hot_Level <= Max_Level){
                 new_pg->Hot_level = New_Hot_Level;
             }else{
@@ -1796,10 +1804,10 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 		}
 
         /*4. mark page valid*/
-        // printf("1752\n");
+        //printf("1752\n");
         mark_page_valid(ssd, &ppa);
-        // printf("1754\n");
-        fprintf(outfile27, "New Page : ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d, Hot_Level %d, Page Type %d\n", ppa.g.ch, ppa.g.lun, ppa.g.pl, ppa.g.blk, ppa.g.subblk, ppa.g.pg, new_pg->Hot_level, new_pg->pg_type);
+        //printf("1754\n");
+        //fprintf(outfile27, "New Page : ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d, Hot_Level %d, Page Type %d\n", ppa.g.ch, ppa.g.lun, ppa.g.pl, ppa.g.blk, ppa.g.subblk, ppa.g.pg, new_pg->Hot_level, new_pg->pg_type);
 
         struct nand_cmd swr;
         swr.type = USER_IO;
@@ -1815,118 +1823,25 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 
     if (is_need_secure_deletion == 1){
         //printf("1770\n");
-        fprintf(outfile32, "--------------------------------------\n");
-        Print_Finder(outfile32, 1);
-        Print_Finder(outfile32, 2);
-        fprintf(outfile32, "--------------------------------------\n");
+        //fprintf(outfile32, "--------------------------------------\n");
+        //Print_Finder(outfile32, 1);
+        //Print_Finder(outfile32, 2);
+        //fprintf(outfile32, "--------------------------------------\n");
+        //printf("1771\n");
         do_secure_deletion(ssd, secure_deletion_table, sensitive_lpn_count, (end_lpn-start_lpn+1));
-        //printf("1772\n");
+        //printf("1773\n");
     }
 
-    fprintf(outfile27 ,"Free Block Management= %d\n", Free_Block_Management->Queue_Size);
-    fprintf(outfile27 ,"Temp Block Management= %d\n", Temp_Block_Management->Queue_Size);
+    //fprintf(outfile27 ,"Free Block Management= %d\n", Free_Block_Management->Queue_Size);
+    //fprintf(outfile27 ,"Temp Block Management= %d\n", Temp_Block_Management->Queue_Size);
     //Print_Finder(outfile27, 1);
     //Print_Finder(outfile27, 2);
 
     free(secure_deletion_table);
     // printf("1781\n");
     clean_Temp_Block_Management();
-    // printf("1783\n");
+    //printf("1783\n");
     return maxlat;
-}
-
-static uint64_t ssd_dsm(struct ssd *ssd, NvmeRequest *req)
-{
-    //printf("ssd dsm\n");
-    uint64_t lba = req->slba;
-    //printf("dsm req->slba  : %"PRIu64"\n",req->slba);
-    fprintf(outfile,"D ");
-    //printf("ssd_dsm ");
-    //printf("lba :%ld \n",lba);
-    struct ssdparams *spp = &ssd->sp;
-    int len = req->nlb;
-    //printf("len :%d\n",len);
-    uint64_t start_lpn = lba / spp->secs_per_pg;
-    uint64_t end_lpn = (lba + len - 1) / spp->secs_per_pg;
-    struct ppa ppa;
-    uint64_t lpn;
-
-    // uint64_t curlat = 0, maxlat = 0;
-    // int r;
-
-    fprintf(outfile,"ssd_dsm start_lpn %ld ",start_lpn);
-    fprintf(outfile,"end_lpn %ld\n",end_lpn);
-    /*
-    printf("lba = %"PRIu64,lba);
-    printf(" sp.tt_pgs = %d\n",ssd->sp.tt_pgs);
-    printf("start_lpn %ld",start_lpn);
-    printf(" end_lpn %ld\n",end_lpn);
-    */
-
-    uint32_t dw11 = le32_to_cpu(req->cmd.cdw11);
-    //printf("dw11 %u\n",dw11);
-    if (dw11 & NVME_DSMGMT_AD){
-        
-
-        for (lpn = start_lpn; lpn <= end_lpn; lpn++) {
-
-            if (lpn >= ssd->sp.tt_pgs) {
-		printf("table out of range!\n");                
-            }
-            else {
-                // table[lpn]++;
-                ssd->trim_table[lpn].cnt++;
-            }
-            ppa = get_maptbl_ent(ssd, lpn);
-            // printf("ssd_dsm lpn:%ld\n",lpn);
-            if ( /*(ppa.ppa != UNMAPPED_PPA) &&*/ mapped_ppa(&ppa)) {
-
-                /* update old page information first */
-               struct nand_page *pg2 = get_pg(ssd, &ppa);
-                if (pg2->status != PG_INVALID){
-                    mark_page_invalid(ssd, &ppa, req);
-                }
-                set_rmap_ent(ssd, INVALID_LPN, &ppa);
-            }
-            /* caulucate page trim count */
-            page_trim_count++;
-            
-            /* calucate trim pda */
-            uint64_t pba = ppa2pgidx(ssd, &ppa);
-            //printf("trim %"PRIu64"\n",pba);
-	    fprintf(outfile3, "trim %"PRIu64"\n",pba);
-        }
-
-        int cnt = 0;
-        for (int i = 0; i < ssd->sp.tt_pgs; i++) {
-            cnt += ssd->trim_table[i].cnt;
-        }
-        //printf("cnt = %d",cnt);
-        table_cnt_avg = cnt / (float)ssd->sp.tt_pgs;
-        // printf("table_cnt_avg : %.4f\n", table_cnt_avg);
-
-        cnt = 0;
-        int max = 0, min = ssd->trim_table[0].cnt;
-        for (int i = 0; i < ssd->sp.tt_pgs; i++) {
-            if ( (float)ssd->trim_table[i].cnt > table_cnt_avg ) {
-                cnt++;
-            }
-
-            if ( ssd->trim_table[i].cnt > max ) {
-                max = ssd->trim_table[i].cnt;
-            }
-
-            if ( ssd->trim_table[i].cnt < min ) {
-                min = ssd->trim_table[i].cnt;
-            }
-        }
-        // printf("cnt more than average : %d\n", cnt);
-        // printf("max : %d min : %d\n", max, min);
-
-    }
-
-    return 0;
-
 }
 
 /*
@@ -1945,37 +1860,40 @@ static void Print_Queue(struct Queue *queue, FILE *outfile)
     }
     fprintf(outfile, " NULL\n");
 }
-
 */
 
+/*
 static void Test3(struct ssd *ssd, FILE *outfile)
 {   
+    //printf("2041\n");
     NvmeRequest req;
 
-    fprintf(outfile, "Free Block Management Size %d\n", Free_Block_Management->Queue_Size);
-    // 2048000
-    for (int i=0 ;i<1000; i++){
-        req.slba = i*2048;
-        req.nlb = 2048;
-        ssd_write(ssd, &req);           
+    fprintf(outfile, "Free Block Management Size %d, Free page %lu\n", Free_Block_Management->Queue_Size, Free_Page);
+   uint64_t nlb = 64;
+   
+    for (int i=0; i<50; i++){
+        req.slba = i*nlb;
+        req.nlb = nlb;
+        ssd_write(ssd, &req);
     }
-    fprintf(outfile, "Free Block Management Size %d\n", Free_Block_Management->Queue_Size);
-
-    for (int i=0; i<342; i++){
-        req.slba = i*6000;
-        req.nlb = 6000;
-        ssd_write(ssd, &req);      
-    }
-    fprintf(outfile, "Free Block Management Size %d\n", Free_Block_Management->Queue_Size);
-
     fprintf(outfile, "--------------------------------------\n");
     Print_Finder(outfile, 1);
     Print_Finder(outfile, 2);
     fprintf(outfile, "--------------------------------------\n");
-    fprintf(outfile, "Do GC\n");
-    do_gc(ssd, true, &req);
-}
 
+    for (int i=0; i<50; i++){
+        req.slba = i*nlb;
+        req.nlb = nlb;
+        ssd_write(ssd, &req);
+    }
+    fprintf(outfile, "--------------------------------------\n");
+    Print_Finder(outfile, 1);
+    Print_Finder(outfile, 2);
+    fprintf(outfile, "--------------------------------------\n");
+    
+    fprintf(outfile, "Free Block Management Size %d, Free page %lu\n", Free_Block_Management->Queue_Size, Free_Page);
+}
+*/
 
 /* 7/17 工作日誌: 目前在確認secure deletion有沒有問題，確認無誤後，就可以確認do_gc和實作should_do_gc()，之後就可以開始跑fio測試 */
 static void *ftl_thread(void *arg)
@@ -2016,6 +1934,8 @@ static void *ftl_thread(void *arg)
     outfile31 = fopen(fileName31, "wb");
     outfile32 = fopen(fileName32, "wb");
     outfile33 = fopen(fileName33, "wb");
+    outfile34 = fopen(fileName34, "wb");
+    outfile35 = fopen(fileName35, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -2027,7 +1947,6 @@ static void *ftl_thread(void *arg)
 
     /* Test Case */ 
     if (Test_Count == 0){
-        Test3(ssd, outfile32);
         Test_Count++;
     }
 
@@ -2047,18 +1966,33 @@ static void *ftl_thread(void *arg)
             
             switch (req->cmd.opcode) {
             case NVME_CMD_WRITE:
-                lat = ssd_write(ssd, req);
-                fprintf(outfile27, "CMD write, lat= %ld\n",lat);
-                fprintf(outfile27 ,"--------------------------------------------\n");    
+                if (Free_Block_Management->Queue_Size < 100){
+                    if (key == 1){
+                        //printf("Block Low\n");
+                        Print_Finder(outfile34, 1);
+                        //fprintf(outfile34, " \n");
+                        fclose(outfile34);
+                    }
+                    key = 0;
+                }else{
+                    //printf("1918\n");
+                    lat = ssd_write(ssd, req);
+                    //printf("1920\n");
+                }
+                //printf("1922\n");
                 request_trim = false;
+                //printf("1924\n");
                 break;
             case NVME_CMD_READ:
+                //printf("1925\n");
                 lat = ssd_read(ssd, req);
+                //printf("1927\n");
                 request_trim = false;
                 break;
             case NVME_CMD_DSM:
-                lat = ssd_dsm(ssd, req);
-                lat = 0;
+                //Test3(ssd, outfile32);
+                // lat = ssd_dsm(ssd, req);
+                // lat = 0;
                 request_trim = true;
                 break;
             default:
@@ -2067,10 +2001,9 @@ static void *ftl_thread(void *arg)
                 ;
             }
 	    //printf("i = %d\n",i);
+            //printf("1944\n");
             req->reqlat = lat;
             req->expire_time += lat;
-            fprintf(outfile10, "req->reqlat= %ld\n",req->reqlat);
-            fprintf(outfile10, "req->expire_time= %ld\n",req->expire_time);
             rc = femu_ring_enqueue(ssd->to_poller[i], (void *)&req, 1);
             fprintf(outfile10, "after rc = %d\n", rc);
             if (rc != 1) {
@@ -2080,13 +2013,17 @@ static void *ftl_thread(void *arg)
 
             /* clean one line if needed (in the background) */
             if(!request_trim) {
-            	if (should_gc_sublk(ssd)) {
+            	//printf("1956\n");
+                if (should_gc_sublk(ssd)) {
             		fprintf(outfile7,"%"PRIu64" %d %d\n",req->slba, req->cmd.opcode, ssd->lm.free_line_cnt);
                 	do_gc(ssd, false, req); // default false
             	}
-            }    
+                //printf("1961\n");
+            }
+            //printf("1963\n");    
         }
     }
+    //printf("1966\n");
     fprintf(outfile2,"page write count %"PRIu64,page_write_count);
     fprintf(outfile2,"page trim count %"PRIu64,page_trim_count);
     
@@ -2117,6 +2054,8 @@ static void *ftl_thread(void *arg)
     fclose(outfile31);
     fclose(outfile32);
     fclose(outfile33);
+    fclose(outfile35);
+    
 
     return NULL;
 }
