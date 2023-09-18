@@ -928,11 +928,29 @@ static int Calculate_GC_Sublk(struct nand_subblock *sublk)
     }
 
     // printf("n %f\n", n);
-    if (n>2){
+    if (n>8){
         return 1; //do_gc
     }else{
         return 0;
     }
+}
+
+static double Calculate_GC_Sublk_2(struct nand_subblock *sublk)
+{
+    // printf("902\n");
+    double n = 0;
+    if (sublk == NULL){
+        printf("905 error\n");
+    }
+    // printf("903 ipc %d\n", sublk->ipc);
+    // printf("904 vpc %d\n", sublk->vpc);
+    if (sublk->vpc == 0){
+        n = (sublk->ipc + sublk->vpc) / 1;
+    }else{
+        n = (sublk->ipc + sublk->vpc) / sublk->vpc;
+    }
+
+    return n;
 }
 
 /* update SSD status about one page from PG_VALID -> PG_VALID */
@@ -1282,6 +1300,10 @@ static struct nand_block *find_blk_from_Finder1(struct ssd *ssd)
     // printf("1250\n");
     struct ssdparams *spp = &ssd->sp;
     int nlinks = spp->subblks_per_blk; //16
+    struct nand_block *blk = NULL;
+    double Max = 0;
+    int is_find_blk = 0;
+
     for(int i=nlinks-1; i>=0; i--){
         // printf("1254\n");
         struct link *list = &finder->list[i];
@@ -1291,6 +1313,7 @@ static struct nand_block *find_blk_from_Finder1(struct ssd *ssd)
             for (current=list->head; current->next!=NULL; current=current->next){
                 // printf("1259\n");
                 struct nand_block *target_block = current->blk;
+                is_find_blk = 0;
                 // printf("1261\n");
                 for (int k=0; k<spp->subblks_per_blk; k++){
                     struct nand_subblock *sublk = &(target_block->subblk[k]);
@@ -1298,11 +1321,23 @@ static struct nand_block *find_blk_from_Finder1(struct ssd *ssd)
                         for (int k2=0; k2<spp->pgs_per_subblk; k2++){
                             struct nand_page *pg = &sublk->pg[k2];
                             if (pg->status == PG_FREE){
-                                return target_block;
+                                double n = Calculate_GC_Sublk_2(sublk);
+                                if (n > Max || n == Max){
+                                    blk = target_block;
+                                    Max = n;
+                                    is_find_blk = 1;
+                                }
+                                break;
                             }
                         }
                     }
+                    if (is_find_blk == 1){
+                        break;
+                    }
                 }
+            }
+            if (blk!=NULL){
+                return blk;
             }
         }
     }
