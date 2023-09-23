@@ -4,11 +4,12 @@
 const char* fileName29 = "WA_Cnt_Record.txt";
 const char* fileName30 = "Write_Cnt_Record.txt";
 const char* fileName33 = "space.txt";
+const char* fileName34 = "GC_Blk_Record.txt";
 
 FILE *outfile29 = NULL;
 FILE *outfile30 = NULL;
 FILE *outfile33 = NULL;
-
+FILE *outfile34 = NULL;
 
 static void *ftl_thread(void *arg);
 static int write_request = 0;
@@ -713,6 +714,7 @@ static void clean_one_block(struct ssd *ssd, struct ppa *ppa)
         n = (blk->ipc + blk->vpc) / blk->vpc;
     }
     fprintf(outfile33, "%f\n", n);
+    fprintf(outfile34, "%d %d\n", blk->vpc, blk->ipc);
 
     for (int pg = 0; pg < spp->pgs_per_blk; pg++) {
         ppa->g.pg = pg;
@@ -978,6 +980,7 @@ static void *ftl_thread(void *arg)
     outfile29 = fopen(fileName29, "wb");
     outfile30 = fopen(fileName30, "wb");
     outfile33 = fopen(fileName33, "wb");
+    outfile34 = fopen(fileName34, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -1031,6 +1034,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile29);
     fclose(outfile30);
     fclose(outfile33);
+    fclose(outfile34);
 
     return NULL;
 }
