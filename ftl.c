@@ -38,6 +38,7 @@ const char* fileName32 = "Test_Record.txt";
 const char* fileName33 = "space.txt";
 const char* fileName34 = "finder_record.txt";
 const char* fileName35 = "victim_sublk_record.txt";
+const char* fileName36 = "GC_Sublk_Record.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -74,6 +75,7 @@ FILE *outfile32 = NULL;
 FILE *outfile33 = NULL;
 FILE *outfile34 = NULL;
 FILE *outfile35 = NULL;
+FILE *outfile36 = NULL;
 //#define FEMU_DEBUG_FTL
 
 static uint64_t WRITE_COUNT = 0;
@@ -928,7 +930,7 @@ static int Calculate_GC_Sublk(struct nand_subblock *sublk)
     }
 
     // printf("n %f\n", n);
-    if (n>8){
+    if (n>4){
         return 1; //do_gc
     }else{
         return 0;
@@ -1465,23 +1467,16 @@ static int clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
     struct ssdparams *spp = &ssd->sp;
     struct nand_page *pg_iter = NULL;
     int cnt = 0; //計算sublk有多少valid pg
-    int is_sensitive_lpn = 0;
-    int valid_pg_cnt = 0;
+    //int is_sensitive_lpn = 0;
+    //int valid_pg_cnt = 0;
     
     //printf("1392\n");
     //struct nand_block *blk = get_blk(ssd, ppa);
     struct nand_subblock *sublk = get_subblk(ssd, ppa);
     //printf("1394\n");
-    double n = 0;
-    if (sublk->vpc == 0){
-        n = (sublk->ipc + sublk->vpc) / 1;
-    }else{
-        n = (sublk->ipc + sublk->vpc) / sublk->vpc;
-    }
-    //printf("1401\n");
-    fprintf(outfile33, "%f\n", n);
-    //printf("1403\n");
+    fprintf(outfile36, "%d %d\n", sublk->vpc, sublk->ipc);
 
+    /*
     for (int pg = 0; pg < spp->pgs_per_subblk; pg++){
         ppa->g.pg = pg;
         pg_iter = get_pg(ssd, ppa);
@@ -1536,6 +1531,7 @@ static int clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
         }
     }
     fprintf(outfile35, " \n");
+    */
 
 
     for (int pg = 0; pg < spp->pgs_per_subblk; pg++){
@@ -1565,9 +1561,9 @@ static int clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
             //printf("1429\n");
             gc_write_page(ssd, ppa, empty_ppa, pg_iter->Hot_level);
             //printf("1431\n");
-            fprintf(outfile32, "GC Original valid : ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d, Hot_level= %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl ,ppa->g.blk, ppa->g.subblk, ppa->g.pg, pg_iter->Hot_level);
-            struct nand_page *pg = get_pg(ssd, empty_ppa);
-            fprintf(outfile32, "GC New valid      : ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d, Hot_Levle= %d\n", empty_ppa->g.ch, empty_ppa->g.lun, empty_ppa->g.pl ,empty_ppa->g.blk, empty_ppa->g.subblk, empty_ppa->g.pg, pg->Hot_level);
+            //fprintf(outfile32, "GC Original valid : ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d, Hot_level= %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl ,ppa->g.blk, ppa->g.subblk, ppa->g.pg, pg_iter->Hot_level);
+            //struct nand_page *pg = get_pg(ssd, empty_ppa);
+            //fprintf(outfile32, "GC New valid      : ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d, Hot_Levle= %d\n", empty_ppa->g.ch, empty_ppa->g.lun, empty_ppa->g.pl ,empty_ppa->g.blk, empty_ppa->g.subblk, empty_ppa->g.pg, pg->Hot_level);
             cnt++;
             //printf("1436\n");
         }else{
@@ -1595,7 +1591,7 @@ static int do_gc(struct ssd *ssd, bool force, NvmeRequest *req)
     //printf("do gc\n");
     victim_blk = Get_Victim_Block(ssd);
     if (victim_blk == NULL){
-        printf("No Victim Blk\n");
+        //printf("No Victim Blk\n");
         //fprintf(outfile32, "No Victim Blk\n");
         return -1;
     }else{
@@ -2059,6 +2055,7 @@ static void *ftl_thread(void *arg)
     outfile33 = fopen(fileName33, "wb");
     outfile34 = fopen(fileName34, "wb");
     outfile35 = fopen(fileName35, "wb");
+    outfile36 = fopen(fileName36, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -2166,7 +2163,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile32);
     fclose(outfile33);
     fclose(outfile35);
-    
+    fclose(outfile36);
 
     return NULL;
 }
