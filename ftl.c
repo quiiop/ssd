@@ -39,6 +39,7 @@ const char* fileName33 = "space.txt";
 const char* fileName34 = "finder_record.txt";
 const char* fileName35 = "victim_sublk_record.txt";
 const char* fileName36 = "GC_Sublk_Record.txt";
+const char* fileName37 = "latency.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -76,6 +77,7 @@ FILE *outfile33 = NULL;
 FILE *outfile34 = NULL;
 FILE *outfile35 = NULL;
 FILE *outfile36 = NULL;
+FILE *outfile37 = NULL;
 //#define FEMU_DEBUG_FTL
 
 static uint64_t WRITE_COUNT = 0;
@@ -1671,7 +1673,7 @@ static uint64_t ssd_read(struct ssd *ssd, NvmeRequest *req)
 
 static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table, int sensitive_lpn_count, int temp_lpn_count)
 {
-    //printf("1521\n");
+    //printf("sec\n");
     struct ssdparams *spp = &ssd->sp; 
     int index = 0;
     //printf("1536\n");
@@ -2056,6 +2058,7 @@ static void *ftl_thread(void *arg)
     outfile34 = fopen(fileName34, "wb");
     outfile35 = fopen(fileName35, "wb");
     outfile36 = fopen(fileName36, "wb");
+    outfile37 = fopen(fileName37, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -2089,7 +2092,7 @@ static void *ftl_thread(void *arg)
                 lat = ssd_write(ssd, req);
                 //printf("1922\n");
                 request_trim = false;
-                //printf("1924\n");
+                fprintf(outfile37, "%lu \n", lat);
                 break;
             case NVME_CMD_READ:
                 //printf("1925\n");
@@ -2164,6 +2167,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile33);
     fclose(outfile35);
     fclose(outfile36);
+    fclose(outfile37);
 
     return NULL;
 }
