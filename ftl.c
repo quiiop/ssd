@@ -1,15 +1,20 @@
 #include "ftl.h"
+#include <time.h>
 
 //#define FEMU_DEBUG_FTL
 const char* fileName29 = "WA_Cnt_Record.txt";
 const char* fileName30 = "Write_Cnt_Record.txt";
 const char* fileName33 = "space.txt";
 const char* fileName34 = "GC_Blk_Record.txt";
+const char* fileName37 = "latency.txt";
+const char* fileName38 = "clock.txt";
 
 FILE *outfile29 = NULL;
 FILE *outfile30 = NULL;
 FILE *outfile33 = NULL;
 FILE *outfile34 = NULL;
+FILE *outfile37 = NULL;
+FILE *outfile38 = NULL;
 
 static void *ftl_thread(void *arg);
 static int write_request = 0;
@@ -701,6 +706,10 @@ static struct line *select_victim_line(struct ssd *ssd, bool force)
 /* here ppa identifies the block we want to clean */
 static void clean_one_block(struct ssd *ssd, struct ppa *ppa)
 {
+    clock_t start_t,finish_t;
+    double total_t = 0;
+    start_t = clock();
+
     struct ssdparams *spp = &ssd->sp;
     struct nand_page *pg_iter = NULL;
     int cnt = 0;
@@ -725,11 +734,18 @@ static void clean_one_block(struct ssd *ssd, struct ppa *ppa)
             gc_read_page(ssd, ppa);
             /* delay the maptbl update until "write" happens */
             gc_write_page(ssd, ppa);
+            int temp=0;
+            for (int i=0; i<4096; i++){
+                temp++;
+            }
             cnt++;
             valid_cnt++;
         }
     }
     fprintf(outfile29, "%d\n", valid_cnt);
+    finish_t = clock();
+    total_t = (double)(finish_t - start_t);
+    fprintf(outfile38, "%f \n", total_t);
 
     ftl_assert(get_blk(ssd, ppa)->vpc == cnt);
 }
@@ -793,6 +809,10 @@ static int do_gc(struct ssd *ssd, bool force)
 
 static uint64_t ssd_read(struct ssd *ssd, NvmeRequest *req)
 {
+    clock_t start_t,finish_t;
+    double total_t = 0;
+    start_t = clock();
+
     struct ssdparams *spp = &ssd->sp;
     uint64_t lba = req->slba;
     int nsecs = req->nlb;
@@ -824,6 +844,10 @@ static uint64_t ssd_read(struct ssd *ssd, NvmeRequest *req)
         maxlat = (sublat > maxlat) ? sublat : maxlat;
     }
 
+    finish_t = clock();
+    total_t = (double)(finish_t - start_t);
+
+    fprintf(outfile38, "%f\n", total_t);
     return maxlat;
 }
 
@@ -882,6 +906,10 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
 
 static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 {
+    clock_t start_t,finish_t;
+    double total_t = 0;
+    start_t = clock();
+
     uint64_t lba = req->slba;
     struct ssdparams *spp = &ssd->sp;
     int len = req->nlb;
@@ -918,6 +946,11 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 
     // printf("write req cnt %d\n", write_request);
 
+    struct nand_cmd swr;
+    swr.type = USER_IO;
+    swr.cmd = NAND_WRITE;
+    swr.stime = req->stime;
+
     for (lpn = start_lpn; lpn <= end_lpn; lpn++) {
         ppa = get_maptbl_ent(ssd, lpn);
         if (mapped_ppa(&ppa)) {
@@ -952,18 +985,19 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         /* need to advance the write pointer here */
         ssd_advance_write_pointer(ssd);
 
-        struct nand_cmd swr;
-        swr.type = USER_IO;
-        swr.cmd = NAND_WRITE;
-        swr.stime = req->stime;
-        /* get latency statistics */
-        curlat = ssd_advance_status(ssd, &ppa, &swr);
-        maxlat = (curlat > maxlat) ? curlat : maxlat;
     }
     if (is_need_secure_deletion == 1){
         do_secure_deletion(ssd, secure_deletion_table, sensitive_lpn_count, (end_lpn-start_lpn+1));
     }
     free(secure_deletion_table);
+
+    /* get latency statistics */
+    curlat = ssd_advance_status(ssd, &ppa, &swr);
+    maxlat = (curlat > maxlat) ? curlat : maxlat;
+
+    finish_t = clock();
+    total_t = (double)(finish_t - start_t);
+    fprintf(outfile38, "%f \n", total_t);
 
     return maxlat;
 }
@@ -981,6 +1015,8 @@ static void *ftl_thread(void *arg)
     outfile30 = fopen(fileName30, "wb");
     outfile33 = fopen(fileName33, "wb");
     outfile34 = fopen(fileName34, "wb");
+    outfile37 = fopen(fileName37, "wb");
+    outfile38 = fopen(fileName38, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -1004,6 +1040,7 @@ static void *ftl_thread(void *arg)
             switch (req->cmd.opcode) {
             case NVME_CMD_WRITE:
                 lat = ssd_write(ssd, req);
+                fprintf(outfile37, "%lu \n", lat);
                 break;
             case NVME_CMD_READ:
                 lat = ssd_read(ssd, req);
@@ -1035,6 +1072,8 @@ static void *ftl_thread(void *arg)
     fclose(outfile30);
     fclose(outfile33);
     fclose(outfile34);
+    fclose(outfile37);
+    fclose(outfile38);
 
     return NULL;
 }
