@@ -40,6 +40,7 @@ const char* fileName34 = "finder_record.txt";
 const char* fileName35 = "victim_sublk_record.txt";
 const char* fileName36 = "GC_Sublk_Record.txt";
 const char* fileName37 = "latency.txt";
+const char* fileName38 = "clock.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -78,6 +79,7 @@ FILE *outfile34 = NULL;
 FILE *outfile35 = NULL;
 FILE *outfile36 = NULL;
 FILE *outfile37 = NULL;
+FILE *outfile38 = NULL;
 //#define FEMU_DEBUG_FTL
 
 static uint64_t WRITE_COUNT = 0;
@@ -1465,7 +1467,6 @@ static int Print_Sublk(struct ppa *ppa, struct nand_page *pg_iter)
 /* here ppa identifies the block we want to clean */
 static int clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req)
 {
-    //printf("1387\n");
     struct ssdparams *spp = &ssd->sp;
     struct nand_page *pg_iter = NULL;
     int cnt = 0; //計算sublk有多少valid pg
@@ -1577,6 +1578,7 @@ static int clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
     //printf("valid pg %d, invalid pg %d\n", cnt, (spp->pgs_per_subblk-cnt));
     //printf("1457\n");
     //printf("1426\n");
+
     return 0;
 }
 
@@ -1761,8 +1763,13 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
     return 0;
 }
 
+
 static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 {
+    clock_t start_t,finish_t;
+    double total_t = 0;
+    start_t = clock();
+
     uint64_t lba = req->slba;
     struct ssdparams *spp = &ssd->sp;
     int len = req->nlb;
@@ -1861,14 +1868,6 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         }else{
 			is_new_Lpn = NEW_LPN;
 		}
-        while (should_gc_sublk(ssd)) {
-            //printf("1729\n");
-            int r = do_gc(ssd, true, req);
-            //printf("1731\n");
-            if (r == -1){
-                break;
-            }
-        }
        // printf("1736\n");
 
         /*1. 先申請一個Empty PPA*/
@@ -1962,6 +1961,10 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     // printf("1781\n");
     clean_Temp_Block_Management();
     //printf("1783\n");
+
+    finish_t = clock();
+    total_t = (double)(finish_t - start_t);
+    fprintf(outfile38, "%f \n", total_t);
     return maxlat;
 }
 
@@ -2059,6 +2062,7 @@ static void *ftl_thread(void *arg)
     outfile35 = fopen(fileName35, "wb");
     outfile36 = fopen(fileName36, "wb");
     outfile37 = fopen(fileName37, "wb");
+    outfile38 = fopen(fileName38, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -2090,7 +2094,6 @@ static void *ftl_thread(void *arg)
             switch (req->cmd.opcode) {
             case NVME_CMD_WRITE:
                 lat = ssd_write(ssd, req);
-                //printf("1922\n");
                 request_trim = false;
                 fprintf(outfile37, "%lu \n", lat);
                 break;
@@ -2168,6 +2171,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile35);
     fclose(outfile36);
     fclose(outfile37);
+    fclose(outfile38);
 
     return NULL;
 }
