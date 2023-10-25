@@ -41,6 +41,7 @@ const char* fileName35 = "victim_sublk_record.txt";
 const char* fileName36 = "GC_Sublk_Record.txt";
 const char* fileName37 = "latency.txt";
 const char* fileName38 = "clock.txt";
+const char* fileName39 = "LBA_39.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -80,9 +81,8 @@ FILE *outfile35 = NULL;
 FILE *outfile36 = NULL;
 FILE *outfile37 = NULL;
 FILE *outfile38 = NULL;
+FILE *outfile39 = NULL;
 //#define FEMU_DEBUG_FTL
-
-static uint64_t WRITE_COUNT = 0;
 
 //static bool wp_2 = false;
 static uint64_t read_cnt = 0;
@@ -1766,6 +1766,9 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
 
 static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 {
+    int boundary_1 = 750000;
+    int boundary_2 = 1250000;
+
     clock_t start_t,finish_t;
     double total_t = 0;
     start_t = clock();
@@ -1773,6 +1776,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     uint64_t lba = req->slba;
     struct ssdparams *spp = &ssd->sp;
     int len = req->nlb;
+    fprintf(outfile39, "%lu\n", lba);
 
     //printf("1621\n");
     uint64_t start_lpn = lba / spp->secs_per_pg;
@@ -1816,11 +1820,9 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     fprintf(outfile27, "lba= %lu, size= %d\n", lba, len);
     fprintf(outfile30, "%lu\n", (end_lpn-start_lpn+1));
     // printf("1661\n");
-    WRITE_COUNT++;
 
-    if (WRITE_COUNT == 10){
+    if (boundary_1<=lba && lba<=boundary_2){
         check = 1;
-        WRITE_COUNT = 0;
     }else{
         check = 0;
     }
@@ -2063,6 +2065,7 @@ static void *ftl_thread(void *arg)
     outfile36 = fopen(fileName36, "wb");
     outfile37 = fopen(fileName37, "wb");
     outfile38 = fopen(fileName38, "wb");
+    outfile39 = fopen(fileName39, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -2172,6 +2175,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile36);
     fclose(outfile37);
     fclose(outfile38);
+    fclose(outfile39);
 
     return NULL;
 }
