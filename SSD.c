@@ -66,15 +66,23 @@ void init_block(int id)
     blk->id = id;
     blk->vpc = 0;
     blk->ipc = 0;
+    blk->epc = pgs_per_blk;
     blk->position = IN_Empty;
 
     int Blocks_per_linkedList = (Total_Block / nHotLevel); // 5
     int Current_HotLevel = Block_Count / Blocks_per_linkedList;
 
     struct Node *node = init_node(blk);
-    // printf("block count %d, current Hot Level %d\n", Block_Count, Current_HotLevel);
     add_Node(Current_HotLevel, node);
     Block_Count++;
+
+    struct LinkedList *list = &finder2.Array[Current_HotLevel].Empty;
+    list->epc += pgs_per_blk; 
+
+    Total_Empty_Block++;
+    Total_vpc = 0;
+    Total_ipc = 0;
+    Total_epc += blk->epc;
 }
 
 void init_finder2(void)
@@ -87,10 +95,17 @@ void init_finder2(void)
         finder2.Array[i].Empty.head.blk = NULL;
         finder2.Array[i].Empty.head.next = NULL;
         finder2.Array[i].Empty.size = 0;
+        finder2.Array[i].Empty.vpc = 0;
+        finder2.Array[i].Empty.ipc = 0;
+        finder2.Array[i].Empty.epc = 0;
+        
         finder2.Array[i].NonEmpty.list_id = NonEmpty_id;
         finder2.Array[i].NonEmpty.head.blk = NULL;
         finder2.Array[i].NonEmpty.head.next = NULL;
         finder2.Array[i].NonEmpty.size = 0;
+        finder2.Array[i].NonEmpty.vpc = 0;
+        finder2.Array[i].NonEmpty.ipc = 0;
+        finder2.Array[i].NonEmpty.epc = 0;
     }
 }
 
@@ -101,16 +116,18 @@ void print_list(int ArrayList_Position, int position)
     
     if (position == Empty_id){
         Temp_List = &Temp_Array->Empty;
+        printf("Empty List vpc %d, ipc %d, epc %d\n", Temp_List->vpc, Temp_List->ipc, Temp_List->epc);
     }
     if (position == NonEmpty_id){
         Temp_List = &Temp_Array->NonEmpty;
+        printf("NonEmpty List vpc %d, ipc %d, epc %d\n", Temp_List->vpc, Temp_List->ipc, Temp_List->epc);
     }
-    
+
     if (Temp_List->head.next == NULL){
         if (Temp_List->list_id == NonEmpty_id){
             printf("NonEmpty List : NULL\n");
         }else if (Temp_List->list_id == Empty_id){
-            printf("Empty List : NULL\n");
+            printf("Empty List : NUL\n");
         }else{
             printf("115 err\n");
         }
@@ -125,6 +142,10 @@ void print_list(int ArrayList_Position, int position)
 
         struct Node *current =NULL;
         for (current=Temp_List->head.next; current->next!=NULL; current=current->next){
+            if (current->blk->position != Temp_List->list_id){  
+                printf("141 blk position err \n");
+                abort();
+            }
             printf("%d -> ", current->blk->id);
         }
         printf("%d -> NULL\n", current->blk->id);
@@ -157,17 +178,19 @@ struct Block *Get_Empty_Block(int HotLevel)
 
     struct Node *node = NULL;
     if (List->head.next == NULL){
-        printf("142 List is NULL err \n");
+        printf("142 ArrayList (%d) Empty is NULL\n", HotLevel);
+    }else{
+        node = List->head.next;
+        struct Block *blk = node->blk;
+        if (blk == NULL){
+            printf("175 blk NULL err\n");
+        }
+        if ((blk->vpc+blk->ipc) == pgs_per_blk){
+            printf("178 blk is full\n");
+        }
+        return blk;
     }
-    node = List->head.next;
-    struct Block *blk = node->blk;
-    if (blk == NULL){
-        printf("147 blk NULL err\n");
-    }
-    if ((blk->vpc+blk->ipc) == pgs_per_blk){
-        printf("150 blk is full\n");
-    }
-    return blk;
+    return NULL;
 }
 
 /*
@@ -211,6 +234,11 @@ void Remove_Block(int ArrayList_Position, struct Block *blk)
         }
         Previous = current;
     }
+    /*更新Empty List的狀態*/ 
+    Empty->vpc = Empty->vpc - current->blk->vpc;
+    Empty->ipc = Empty->ipc - current->blk->ipc;
+    Empty->epc = Empty->epc - current->blk->epc;
+    printf("Empty List state : vpc %d, ipc %d, epc %d\n", Empty->vpc, Empty->ipc, Empty->epc);
 
     /*把current node加入NonEmpty List*/
     if (NonEmpty->head.next == NULL){
@@ -225,22 +253,23 @@ void Remove_Block(int ArrayList_Position, struct Block *blk)
         NonEmpty->size++;
     }
     blk->position = IN_NonEmpty;
+    /*更新NonEmpty List的狀態*/
+    NonEmpty->vpc = NonEmpty->vpc + current->blk->vpc;
+    NonEmpty->ipc = NonEmpty->ipc + current->blk->ipc;
+    NonEmpty->epc = NonEmpty->epc + current->blk->epc;
+    printf("NonEmpty List state : vpc %d, ipc %d, epc %d\n", NonEmpty->vpc, NonEmpty->ipc, NonEmpty->epc);
 
-    /*Print NonEmpty*/
-    /* printf("215 NonEmpty : ");
-    current = NULL;
-    for (current=NonEmpty->head.next; current!=NULL; current=current->next){
-        printf("%d -> ", current->blk->id);
-    }
-    printf("NULL\n"); */
+    /*更新統計的資料*/
+    Total_Empty_Block--;
 }
 
 void init_maplba(void)
 {
     maplba = (struct ppa *)malloc(sizeof(struct ppa) * Total_Block*pgs_per_blk); // 120
     for (int i=0; i<Total_Block*pgs_per_blk; i++){
-        maplba[i].block_id = -1;
-        maplba[i].pg_id = -1;
+        maplba[i].block_id = NO_SETTING;
+        //maplba[i].sublk_id = NO_SETTING;
+        maplba[i].pg_id = NO_SETTING;
     }
 }
 
@@ -263,29 +292,27 @@ struct Block *Get_Block(int ArrayList_Position, int Block_id)
         if (position == IN_Empty){
             struct LinkedList *list = &finder2.Array[ArrayList_Position].Empty;
             if (list->head.next == NULL){
-                printf("219 err \n");
+                printf("219 Empty List NULL \n");
             }
             struct Node *current = NULL;
             for (current=list->head.next; current!=NULL; current=current->next){
                 if (current->blk->id == Block_id){
                     blk = current->blk;
-                    break;
+                    return blk;       
                 }
             }
-            return blk;
         }else if(position == IN_NonEmpty){
             struct LinkedList *list = &finder2.Array[ArrayList_Position].NonEmpty;
             if (list->head.next == NULL){
-                printf("232 err \n");
+                printf("232 NonEmpty NULL \n");
             }
             struct Node *current = NULL;
             for (current=list->head.next; current!=NULL; current=current->next){
                 if (current->blk->id == Block_id){
                     blk = current->blk;
-                    break;
+                    return blk;
                 }
             }
-            return blk;
         }else{
             printf("220 err\n");
         }
@@ -309,11 +336,27 @@ struct Page *Get_Page(struct Block *blk, int Page_id)
     return pg;
 }
 
-void Mark_Page_Invalid(struct Block *blk, struct Page *pg)
+void Mark_Page_Invalid(int ArrayList_Position, struct Block *blk, struct Page *pg)
 {
+    struct LinkedList *list = NULL;
+    if (blk->position == IN_Empty){
+        list = &finder2.Array[ArrayList_Position].Empty;
+    }else if (blk->position == IN_NonEmpty){
+        list = &finder2.Array[ArrayList_Position].NonEmpty;
+    }else{
+        printf("330 err\n");
+    }
+
     pg->statue = INVALID;
+    
     blk->ipc++;
     blk->vpc--;
+
+    list->ipc++;
+    list->vpc--;
+
+    Total_ipc++;
+    Total_vpc--;
 }
 
 struct Page *Get_Empty_Page(struct Block *blk)
@@ -348,6 +391,12 @@ void HotLevel_Order(int *array, int HotLevel)
 
 struct ppa Get_Empty_Ppa(int HotLevel)
 {
+    if (Total_Empty_Block == 0){
+        printf("394 No Empty Block err\n");
+        abort();
+    }
+
+    printf("lba original HotLevel %d\n", HotLevel);
     struct ppa ppa;
 
     int array[nHotLevel];
@@ -360,6 +409,9 @@ struct ppa Get_Empty_Ppa(int HotLevel)
             break;
         }
     }
+    if (blk == NULL){
+        printf("399 No Empty Blk err\n");
+    }
     
     struct Page *pg = Get_Empty_Page(blk);
 
@@ -368,10 +420,27 @@ struct ppa Get_Empty_Ppa(int HotLevel)
     return ppa;
 }
 
-void Mark_Page_Valid(struct Block *blk ,struct Page *pg)
+void Mark_Page_Valid(int ArrayList_Position, struct Block *blk ,struct Page *pg)
 {
+    struct LinkedList *list = NULL;
+    if (blk->position == IN_Empty){
+        list = &finder2.Array[ArrayList_Position].Empty;
+    }else if (blk->position == IN_NonEmpty){
+        list = &finder2.Array[ArrayList_Position].NonEmpty;
+    }else{
+        printf("389 err\n");
+    }
+    
     pg->statue = VALID;
+    
     blk->vpc++;
+    blk->epc--;
+
+    list->vpc++;
+    list->epc--;
+
+    Total_vpc++;
+    Total_epc--;
 }
 
 int Is_Block_Full(struct Block *blk)
@@ -399,11 +468,21 @@ void ssd_write(int lba)
    int Blocks_per_linkedList = (Total_Block / nHotLevel); // 5
 
    printf("write lba %d\n", lba);
+   if (lba >= (Total_Block * pgs_per_blk)){
+        printf("471 err\n");
+        abort();
+   }
+
    if (mapped(lba) == MAPPED){ // lba不是第一次寫入
         printf("mapped \n");
         struct ppa *ppa = &maplba[lba];
         /* 找出Block */
+        printf("Mapped lba %d -> Old ppa (Block %d, Page %d)\n", lba, ppa->block_id, ppa->pg_id);
         int ArrayList_Position = ppa->block_id / Blocks_per_linkedList;
+        if (ArrayList_Position >= nHotLevel){
+            printf("477 err \n");
+            abort();
+        }
         struct Block *blk = Get_Block(ArrayList_Position, ppa->block_id);
         if (blk == NULL){
             printf("259 err\n");
@@ -414,7 +493,7 @@ void ssd_write(int lba)
             printf("279 err\n"); 
         }
         /* Mark Page Invalid */
-        Mark_Page_Invalid(blk, pg);
+        Mark_Page_Invalid(ArrayList_Position, blk, pg);
         /* 更新Finder1的資訊 */
         // 某個更新Finder1的function
 
@@ -422,6 +501,11 @@ void ssd_write(int lba)
         lba_HotLevel = pg->LBA_HotLevel;
    }
 
+   if (is_new_lba == 0){
+        if (++lba_HotLevel == nHotLevel){ // 限制lba Hotlevel上限
+            lba_HotLevel = nHotLevel-1;
+        }
+   }
    struct ppa ppa = Get_Empty_Ppa(lba_HotLevel);
    maplba[lba] = ppa;
    
@@ -436,10 +520,7 @@ void ssd_write(int lba)
         printf("369 err\n");
    }
    
-   Mark_Page_Valid(blk, pg);
-   if (is_new_lba == 0){
-        lba_HotLevel++;
-   }
+   Mark_Page_Valid(ArrayList_Position, blk, pg);
    pg->LBA_HotLevel = lba_HotLevel;
 
    printf("lba %d -> ppa (block %d, page %d)\n", lba, ppa.block_id, ppa.pg_id);
@@ -447,25 +528,41 @@ void ssd_write(int lba)
    printf("blk vpc %d, ipc %d\n", blk->vpc, blk->ipc);
    
    if (Is_Block_Full(blk) == TRUE){
-        Rmove_Block_To_NonEmpty(blk);
+        if (blk->position == IN_Empty){
+            Rmove_Block_To_NonEmpty(blk);
+        }
    }
    printf("\n");
 }
 
+void Print_SSD_State(void)
+{
+    printf("Total Empty Block %d\n", Total_Empty_Block);
+    printf("Total vpc %d, Total ipc %d, Total epc %d\n", Total_vpc, Total_ipc, Total_epc);
+}
+
+
 int main(void)
 {
+    /*初始化*/
     init_maplba();
     init_finder2();
 
     for (int i=0; i<Total_Block; i++){
         init_block(i);
     }
-    for (int lba=0; lba<10; lba++){
-        ssd_write(lba);
-    }
-
-
     print_finder2();
+    Print_SSD_State();
+    printf("=============\n");
+
+    for (int n=0; n<1; n++){
+        for (int lba=0; lba<Total_Block*pgs_per_blk; lba++){
+            ssd_write(lba);
+        }
+        print_finder2();
+        Print_SSD_State();
+        printf("=============\n");
+    }
 }
 
 /*
