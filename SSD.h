@@ -8,11 +8,11 @@
 #define NonEmpty_id 0
 #define Empty_id 1
 
-/*Block->position的位置*/
+/*Block.position的位置*/
 #define IN_NonEmpty 0
 #define IN_Empty 1
 
-/*Page.statue的狀態*/
+/*Page.state的狀態*/
 #define INVALID -1
 #define VALID 1
 #define EMPTY 0
@@ -24,21 +24,16 @@
 /*用於初始化*/
 #define NO_SETTING -1
 
-/*Page->type Page的類型*/
+/*Page.type Page的類型*/
 #define General 0
 #define Sensitive 1
 
-/*Sublock->statue*/
+/*Sublock.state*/
 #define Victim 0
 #define NonVictim 1
 
 #define TRUE 1
 #define FALSE 0
-
-const int nHotLevel = 8;
-const int Total_Block = 4096; //24
-const int pgs_per_blk = 3; //3
-int Block_Count = 0;
 
 /*用於Debug or 控制是否GC*/
 int Total_Empty_Block = 0;
@@ -46,62 +41,124 @@ int Total_vpc = 0;
 int Total_ipc = 0;
 int Total_epc = 0;
 
+/*SSD的參數*/ 
+const int pgs_per_sublk = 2;
+const int sublks_per_blk = 3;
+const int blks_per_pl = 24;
+const int pls_per_lun = 1;
+const int luns_per_ch = 1;
+const int nchs = 1;
+const int nblks = nchs*luns_per_ch*pls_per_lun*blks_per_pl; 
+const int pgs_per_blk = sublks_per_blk*pgs_per_sublk;
+
+/*Finder1的參數*/
+const int nLayers_Finder1 = sublks_per_blk;
+
+/*Finder2的參數*/
+const int Total_Block = nblks;
+const int nHotLevel = 8;
+const int Blocks_per_linkedList = (Total_Block / nHotLevel);
+const int pgs_per_linkedList = Blocks_per_linkedList * pgs_per_blk;
+int Current_Block_Count = 0;
 
 struct ppa
 {
-    //int ch_id;
-    //int lun_id;
-    //int pl_id;
-    int block_id;
-    //int sublk_id;
-    int pg_id;
+    int ch;
+    int lun;
+    int pl;
+    int blk;
+    int sublk;
+    int pg;
+    int state;
+};
+
+struct addr
+{
+    int ch;
+    int lun;
+    int pl;
+    int blk;
+    int sublk;
+    int pg;
 };
 
 struct Page
 {
+    struct addr addr;
     int id;
-    int statue;
+    int state;
     int LBA_HotLevel;
     int type;
 };
 
-/*
 struct Sublock
 {
-    struct Page *page;
-    int vpc;
-    int ipc;
-    int epc;
-    int statue;
-}
-*/
-
-struct Block
-{
-    struct Page *page;
+    struct Page *pg;
     int id;
     int vpc;
     int ipc;
     int epc;
+    int state;
+};
+
+struct Block
+{
+    struct Sublock *sublk;
+    int id;
+    int block_id; //用於辨識BLock存在哪個Finder2->ArrayList，這是唯一的id
+    int vpc;
+    int ipc;
+    int epc;
+    int victim_sublk_count;
+    int Nonvictim_sublk_count;
     int position;
 };
 
-/*
+
 struct Plane
 {
+    int id;
     struct Block *blk;
 };
 
 struct Lun
 {
-    struct Lun
-}
-*/
+    int id;
+    struct Plane *pl;
+};
+
+struct Channel
+{
+    int id;
+    struct Lun *lun;
+};
+
+struct SSD
+{
+    struct Channel *ch;
+};
 
 struct Node
 {
     struct Block *blk;
     struct Node *next;
+};
+
+struct LinkedList_1
+{
+    struct Node head;
+    int id;
+};
+
+struct ArrayList_1
+{
+    struct LinkedList_1 list;
+    int id;
+};
+
+struct Finder1
+{
+    struct ArrayList_1 *Array;
 };
 
 struct LinkedList
@@ -126,10 +183,4 @@ struct Finder2
     struct ArrayList *Array;
 };
 
-struct Node* init_node(struct Block *blk);
-void add_Node(int HotLevel, struct Node *node);
-void init_block(int id);
-void init_finder2(void);
-void print_list(int ArrayList_Position, int position);
-struct Block *Get_Empty_Block(int HotLevel);
 #endif
