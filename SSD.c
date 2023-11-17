@@ -117,6 +117,8 @@ struct Block *Get_Victim_Block_From_Finder1(void)
 
     if (current == NULL){
         printf("118 Warning !! Not Find Victim Blk\n");
+        /*沒有找到Victim Block不一定是錯誤的，因為有時候連續大批資料寫入寫會導致觸發了should_do_gc，但是所有的資料都是valid page，這時候就會發現沒有Victim Block可以處理，但是如果是Enforce_do_gc觸觸發的話，就一定要找出Victim Block*/
+        
         //Print_Finder1();
         //Print_SSD_State();
         //abort();
@@ -649,7 +651,7 @@ void Rmove_Block_To_NonEmpty(struct Block *blk)
     printf("Remove Block %d, position %d\n", blk->id, blk->position);
 }
 
-void Remove_Block_To_Empty(struct Block *blk, int victim_blk_vpc, int victim_blk_ipc, int victim_blk_epc)
+void Remove_Block_To_Empty(struct Block *blk) //int victim_blk_vpc, int victim_blk_ipc, int victim_blk_epc
 {
     /* 
     這裡要注意一點，從NonEmpty list移除block時，NonEmpty list vpc、ipc、epc是要減去gc前victim block的vpc、ipc、epc。
@@ -692,9 +694,9 @@ void Remove_Block_To_Empty(struct Block *blk, int victim_blk_vpc, int victim_blk
     }
     //更新NonEmpty List的狀態
     printf("662 Before NonEmptyList(%d) state : vpc %d, ipc %d, epc %d\n",Array->array_id, NonEmpty->vpc, NonEmpty->ipc, NonEmpty->epc);
-    NonEmpty->vpc = NonEmpty->vpc - victim_blk_vpc;
-    NonEmpty->ipc = NonEmpty->ipc - victim_blk_ipc;
-    NonEmpty->epc = NonEmpty->epc - victim_blk_epc;
+    NonEmpty->vpc = NonEmpty->vpc - blk->vpc;
+    NonEmpty->ipc = NonEmpty->ipc - blk->ipc;
+    NonEmpty->epc = NonEmpty->epc - blk->epc;
     printf("666 After NonEmptyList(%d) state : vpc %d, ipc %d, epc %d\n",Array->array_id, NonEmpty->vpc, NonEmpty->ipc, NonEmpty->epc);
 
     //把current node加入Empty List
@@ -735,16 +737,16 @@ void Remove_Block_To_Empty(struct Block *blk, int victim_blk_vpc, int victim_blk
     }
 }
 
-void Update_EmptyList(struct Block *blk, int total_victim_sublk_vpc, int total_victim_sublk_ipc)
+void Update_EmptyList(struct Block *blk) //, int total_victim_sublk_vpc, int total_victim_sublk_ipc
 {
     int ArrayList_Position = blk->block_id / Blocks_per_linkedList;
     struct ArrayList *Array = &finder2.Array[ArrayList_Position];
     struct LinkedList *Empty = &Array->Empty;
     struct LinkedList *NonEmpty = &Array->NonEmpty;
 
-    Empty->vpc = Empty->vpc - total_victim_sublk_vpc;
+    /*Empty->vpc = Empty->vpc - total_victim_sublk_vpc;
     Empty->ipc = Empty->ipc - total_victim_sublk_ipc;
-    Empty->epc = Empty->epc + (total_victim_sublk_vpc+total_victim_sublk_ipc);
+    Empty->epc = Empty->epc + (total_victim_sublk_vpc+total_victim_sublk_ipc);*/
     printf("724 Update EmptyList vpc %d, ipc %d, epc %d\n", Empty->vpc, Empty->ipc, Empty->epc);
 }
 
@@ -758,12 +760,12 @@ void Move_Block_Position(struct Block *blk, int victim_blk_vpc, int victim_blk_i
     */
 
     printf("759 blk(%d): position %d\n", blk->block_id, blk->position);
-    printf("760 處理前 blk vpc %d, ipc %d, epc %d\n", victim_blk_vpc, victim_blk_ipc, victim_blk_epc);
-    printf("761 處理後 blk vpc %d, ipc %d, epc %d\n", blk->vpc, blk->ipc, blk->epc);
+    printf("760 處理前 blk(%d) vpc %d, ipc %d, epc %d\n",blk->block_id, victim_blk_vpc, victim_blk_ipc, victim_blk_epc);
+    printf("761 處理後 blk(%d) vpc %d, ipc %d, epc %d\n",blk->block_id, blk->vpc, blk->ipc, blk->epc);
     if (blk->position == IN_NonEmpty){
-        Remove_Block_To_Empty(blk, victim_blk_vpc, victim_blk_ipc, victim_blk_epc);
+        Remove_Block_To_Empty(blk); //, victim_blk_vpc, victim_blk_ipc, victim_blk_epc
     }else{ // blk->position == IN_Empty
-        Update_EmptyList(blk, total_victim_sublk_vpc, total_victim_sublk_ipc);
+        Update_EmptyList(blk); //, total_victim_sublk_vpc, total_victim_sublk_ipc
     }
     //Remove_Block_To_Empty(blk, victim_blk_vpc, victim_blk_ipc, victim_blk_epc);
 }
@@ -1157,15 +1159,17 @@ void Mark_Sublock_Free(struct Block *blk, struct Sublock *sublk)
         printf("996 err\n");
     }
 
-    // 更新block資訊
-    int used_pg = sublk->vpc + sublk->ipc;
+    // 更新block資訊，因為sublk之後的資料會被更新調，所以記得先記錄下來
+    int sublk_vpc = sublk->vpc;
+    int sublk_ipc = sublk->ipc;
+    int used_pg = sublk_vpc + sublk_ipc;
     
-    blk->vpc = blk->vpc - sublk->vpc;
+    blk->vpc = blk->vpc - sublk_vpc;
     if (blk->vpc<0){
         printf("1003 err\n");
         abort();
     }
-    blk->ipc = blk->ipc - sublk->ipc;
+    blk->ipc = blk->ipc - sublk_ipc;
     if (blk->ipc<0){
         printf("1008 err\n");
         abort();
@@ -1198,6 +1202,20 @@ void Mark_Sublock_Free(struct Block *blk, struct Sublock *sublk)
         pg->LBA_HotLevel = NO_SETTING;
         pg->type = NO_SETTING;
     }
+
+    // 更新Block所在的List資訊
+    int ArrayList_Position = blk->block_id / Blocks_per_linkedList;
+    struct ArrayList *Array = &finder2.Array[ArrayList_Position];
+    struct LinkedList *List = NULL;
+
+    if (blk->position == IN_Empty){
+        List = &Array->Empty;
+    }else{
+        List = &Array->NonEmpty;
+    }
+    List->vpc = List->vpc - sublk_vpc;
+    List->ipc = List->ipc - sublk_ipc;
+    List->epc = List->epc + used_pg;
 }
 
 int do_gc(void)
@@ -1232,7 +1250,12 @@ int do_gc(void)
 
             have_victim_sublk = TRUE;
             Clean_One_Sublock(victim_sublk);
+            printf("1237 After Clean Blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
+            printf("1238 After Clean Sublk(%d), vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);            
+
             Mark_Sublock_Free(victim_blk, victim_sublk);
+            printf("1241 After MarkFree Blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
+            printf("1242 After MarkFree Sublk(%d), vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);
             
             // 更新block資訊
             victim_blk->victim_sublk_count--;
@@ -1253,7 +1276,7 @@ int do_gc(void)
 
     // 更新block position
     if (have_victim_sublk == TRUE){
-        printf("move victim block \n");
+        printf("move victim blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
         Move_Block_Position(victim_blk, victim_blk_vpc, victim_blk_ipc, victim_blk_epc, total_victim_sublk_vpc, total_victim_sublk_ipc);
     }else{
         printf("1082 err No victim sublk\n");
@@ -1277,6 +1300,7 @@ void ssd_write(int lba)
         
         if (r == Stop_GC){
             Print_SSD_State();
+            printf("1282 err Enforce GC Not Find Victim Blk\n");
             abort();
         }
    }
@@ -1348,8 +1372,8 @@ int main(void)
     Init();
 
     int count = 0;
-    for (int i=0; i<2; i++){
-        for(int lba=0; lba<100; lba++){
+    for (int i=0; i<20; i++){
+        for(int lba=0; lba<7; lba++){
             ssd_write(lba);
             
             if (should_do_gc() == TRUE){
