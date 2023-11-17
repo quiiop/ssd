@@ -17,7 +17,7 @@
 #define VALID 1
 #define EMPTY 0
 
-/*LB是新的or舊的*/
+/*用於maplba*/
 #define UNMAPPED 0
 #define MAPPED 1
 
@@ -49,7 +49,11 @@ const int pls_per_lun = 1;
 const int luns_per_ch = 1;
 const int nchs = 1;
 const int nblks = nchs*luns_per_ch*pls_per_lun*blks_per_pl; 
+
 const int pgs_per_blk = sublks_per_blk*pgs_per_sublk;
+const int pgs_per_pl = pgs_per_blk*blks_per_pl;
+const int pgs_per_lun = pgs_per_pl*pls_per_lun;
+const int pgs_per_ch = pgs_per_lun * luns_per_ch;
 
 /*Finder1的參數*/
 const int nLayers_Finder1 = sublks_per_blk;
@@ -113,7 +117,6 @@ struct Block
     int Nonvictim_sublk_count;
     int position;
 };
-
 
 struct Plane
 {
