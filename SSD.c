@@ -1334,12 +1334,11 @@ int main(void)
 {
     Init();
 
-    for (int i=0; i<18; i++){
-        for(int lba=0; lba<8; lba++){
+    for (int i=0; i<4; i++){
+        for(int lba=0; lba<30; lba++){
             ssd_write(lba);
         }
     }
     Print_SSD_State();
     printf("Task over !!\n");
 }
-/* Update那個function有點問題 */

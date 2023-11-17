@@ -186,4 +186,5 @@ struct Finder2
     struct ArrayList *Array;
 };
 
+void Print_SSD_State(void);
 #endif
