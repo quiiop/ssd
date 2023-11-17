@@ -116,10 +116,11 @@ struct Block *Get_Victim_Block_From_Finder1(void)
     }
 
     if (current == NULL){
-        printf("118 err\n");
+        printf("118 Warning !! Not Find Victim Blk\n");
         //Print_Finder1();
-        Print_SSD_State();
-        abort();
+        //Print_SSD_State();
+        //abort();
+        return NULL;
     }
 
     struct Block *blk = current->blk;
@@ -1073,6 +1074,17 @@ int should_do_gc(void)
     }
 }
 
+int Enforce_do_gc(void)
+{
+    double threshold_percent = 0.8;
+    double threshold = Total_Block * (1-threshold_percent);
+    if (Total_Empty_Block < threshold){
+        return TRUE;
+    }else{
+        return FALSE;
+    }
+}
+
 void GC_Write(struct Page *pg)
 {
     // 取得valid pge的lba
@@ -1188,15 +1200,16 @@ void Mark_Sublock_Free(struct Block *blk, struct Sublock *sublk)
     }
 }
 
-void do_gc(void)
+int do_gc(void)
 {
     printf("do gc !!\n");
     
     struct Block *victim_blk = Get_Victim_Block_From_Finder1();
     if (victim_blk == NULL){
-        printf("871 err\n");
-        abort();
+        printf("12088 No Victim Block\n");
+        return Stop_GC;
     }
+
     printf("Victim Block %d\n", victim_blk->block_id);
     printf("Victim Blokc vpc %d, ipc %d, epc %d\n", victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
     printf("Victim Block victim count %d, Nonvictim count %d, position %d\n", victim_blk->victim_sublk_count, victim_blk->Nonvictim_sublk_count, victim_blk->position);
@@ -1249,6 +1262,8 @@ void do_gc(void)
 
     printf("Clean blk(%d), vpc %d, ipc %d, epc %d, position %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc, victim_blk->position);
     printf("do gc over\n");
+
+    return Finish_GC;
 }
 
 void ssd_write(int lba)
@@ -1257,9 +1272,13 @@ void ssd_write(int lba)
    int lba_HotLevel = 0;
    int Blocks_per_linkedList = (Total_Block / nHotLevel); // 5
 
-   int r = should_do_gc();
-   if (r == TRUE){
-        do_gc();
+   while (Enforce_do_gc() == TRUE){
+        int r = do_gc();
+        
+        if (r == Stop_GC){
+            Print_SSD_State();
+            abort();
+        }
    }
    
    printf("write lba %d\n", lba);
@@ -1321,12 +1340,6 @@ void ssd_write(int lba)
         printf("887 err \n");
         abort();
     }   
-
-   /*if (Is_Block_Full(blk) == TRUE){
-        if (blk->position == IN_Empty){
-            Rmove_Block_To_NonEmpty(blk);
-        }
-   }*/
    printf("\n");
 }
 
@@ -1334,11 +1347,17 @@ int main(void)
 {
     Init();
 
-    for (int i=0; i<4; i++){
-        for(int lba=0; lba<30; lba++){
+    int count = 0;
+    for (int i=0; i<2; i++){
+        for(int lba=0; lba<100; lba++){
             ssd_write(lba);
+            
+            if (should_do_gc() == TRUE){
+                do_gc();
+            }
+            count++;
         }
     }
     Print_SSD_State();
-    printf("Task over !!\n");
+    printf("Task over Execute time %d!!\n", count);
 }

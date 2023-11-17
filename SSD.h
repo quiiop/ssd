@@ -32,6 +32,10 @@
 #define Victim 0
 #define NonVictim 1
 
+/*GC的行為*/
+#define Stop_GC 0
+#define Finish_GC 1
+
 #define TRUE 1
 #define FALSE 0
 
@@ -64,6 +68,11 @@ const int nHotLevel = 8;
 const int Blocks_per_linkedList = (Total_Block / nHotLevel);
 const int pgs_per_linkedList = Blocks_per_linkedList * pgs_per_blk;
 int Current_Block_Count = 0;
+
+/*設定sensitive的range*/
+const int boundary_1 = 36;
+const int boundary_2 = 72;
+
 
 struct ppa
 {
