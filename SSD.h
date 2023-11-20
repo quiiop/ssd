@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #ifndef SSD_H
 #define SSD_H
@@ -46,9 +47,9 @@ int Total_ipc = 0;
 int Total_epc = 0;
 
 /*SSD的參數*/ 
-const int pgs_per_sublk = 2;
-const int sublks_per_blk = 3;
-const int blks_per_pl = 24;
+const int pgs_per_sublk = 3;  //3
+const int sublks_per_blk = 3; //3
+const int blks_per_pl = 16;   //16
 const int pls_per_lun = 1;
 const int luns_per_ch = 1;
 const int nchs = 1;
@@ -70,9 +71,8 @@ const int pgs_per_linkedList = Blocks_per_linkedList * pgs_per_blk;
 int Current_Block_Count = 0;
 
 /*設定sensitive的range*/
-const int boundary_1 = 36;
-const int boundary_2 = 72;
-
+const int boundary_1 = 30;
+const int boundary_2 = 60;
 
 struct ppa
 {
@@ -112,6 +112,7 @@ struct Sublock
     int ipc;
     int epc;
     int state;
+    int have_invalid_sensitive_page;
 };
 
 struct Block

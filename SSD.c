@@ -56,7 +56,7 @@ void Remove_Block_Finder1(int Victim_Sublk_Cnt, struct Block *blk)
     }
     struct LinkedList_1 *List = &finder1.Array[index].list;
     if (List->head.next == NULL){
-        printf("58 err\n");
+        printf("58 err, Finder1 Array %d\n", index);
         abort();
     }
 
@@ -210,6 +210,7 @@ void init_sublock(struct Sublock *sublk, int id, int cid, int lid, int pid, int 
     sublk->ipc = 0;
     sublk->epc = pgs_per_sublk;
     sublk->state = NonVictim;
+    sublk->have_invalid_sensitive_page = FALSE;
 }
 
 void init_block(struct Block *blk, int id, int cid, int lid, int pid)
@@ -554,7 +555,13 @@ void Print_All_Block(void)
                     ppa.blk = blk;
                     
                     struct Block *blk = get_blk(&ppa);
-                    printf("Blk(%d) : vpc %d, ipc %d, epc %d, position %d\n", blk->block_id, blk->vpc, blk->ipc, blk->epc, blk->position);
+                    printf("Blk(%d) : vpc %d, ipc %d, epc %d, position %d : ", blk->block_id, blk->vpc, blk->ipc, blk->epc, blk->position);
+                    for (int sublk=0; sublk<sublks_per_blk; sublk++){
+                        ppa.sublk = sublk;
+                        struct Sublock *sublk = get_sublk(&ppa);
+                        printf("sublk(%d) [vpc %d, ipc %d, epc %d, state %d] -> ", sublk->id, sublk->vpc, sublk->ipc, sublk->epc, sublk->state);
+                    }
+                    printf("NULL\n");
                 }
             }
         }
@@ -563,11 +570,11 @@ void Print_All_Block(void)
 
 void Print_SSD_State(void)
 {
-    printf("Total Empty Block %d\n", Total_Empty_Block);
-    printf("Total vpc %d, Total ipc %d, Total epc %d\n", Total_vpc, Total_ipc, Total_epc);
     Print_Finder2();
     Print_All_Block();
     Print_Finder1();
+    printf("Total Empty Block %d\n", Total_Empty_Block);
+    printf("Total vpc %d, Total ipc %d, Total epc %d\n", Total_vpc, Total_ipc, Total_epc);
 }
 
 // Block在Finder2搬移的操作
@@ -851,11 +858,12 @@ void Mark_Page_Valid(struct ppa *ppa)
 // Mark Page Invalid 的操作
 int Check_Sublk_Victim(struct Sublock *sublk)
 {
-    if (sublk->vpc == 0){
+    if (sublk->ipc == pgs_per_sublk){
         return Victim;
     }
 
     double n = (sublk->vpc+sublk->ipc) / sublk->vpc;
+    printf("866 n = %f\n", n);
     if (n >= 2){
         return Victim;
     }else{
@@ -1014,7 +1022,7 @@ void HotLevel_Order(int *array, int HotLevel)
     }
 }
 
-struct ppa Get_Empty_PPA(int HotLevel)
+struct ppa Get_Empty_PPA(int HotLevel) // For General LBA
 {
     if (Total_Empty_Block == 0){
         printf("394 No Empty Block err\n");
@@ -1054,6 +1062,85 @@ struct ppa Get_Empty_PPA(int HotLevel)
     return ppa;
 }
 
+struct Page *Get_Empty_Page_From_Finder1()
+{
+    struct Page *pg = NULL;
+    for (int n=0; n<nLayers_Finder1; n++){
+        
+        struct ArrayList_1 *Array = &finder1.Array[n];
+        if (Array == NULL){
+            printf("1063 err\n");
+            abort();
+        }
+        printf("Array(%d) ", Array->id);
+        
+        struct LinkedList_1 *List = &Array->list;
+        printf("List(%d) -> ", List->id);
+        if (List == NULL){
+            printf("1071 err\n");
+            abort();
+        }
+
+        if (List->head.next == NULL){
+            printf("NULL\n");
+        }else{
+            struct Node *current = NULL;
+            for (current=List->head.next; current!=NULL; current=current->next){
+                printf("blk(%d) vpc %d, ipc %d, epc %d -> ", current->blk->block_id, current->blk->vpc, current->blk->ipc, current->blk->epc);
+                if (current->blk->epc < 0){
+                    printf("1072 err\n");
+                    abort();
+                }
+                if (current->blk->epc > 0){
+                    printf("1087 Find\n");
+                    struct Block *blk = current->blk;
+                    for (int k=0; k<sublks_per_blk; k++){
+                        struct Sublock *sublk = &blk->sublk[k];
+                        if (sublk->epc < 0){
+                            printf("1091 err\n");
+                            abort();
+                        }
+                        if (sublk->epc > 0){
+                            struct Page *pg = NULL;
+                            for (int p=0; p<pgs_per_sublk; p++){
+                                pg = &sublk->pg[p];
+                                if (pg->state == EMPTY){
+                                    return pg;
+                                } 
+                            }
+                            if (pg == NULL){
+                                printf("1103 err \n");
+                                abort();
+                            }
+                        }
+                    }
+                }
+            }
+            printf("NULL\n");
+        }
+    }
+    return NULL;
+}
+
+struct ppa Get_Empty_PPA_For_Senitive_LBA(int HotLevel) // For Sensitive LBA
+{
+    /*一開始先去Finder1找找看有沒有Empty Page，如果Finder1找不到，才用Get_Empty_PPA找Empty Page*/
+    struct ppa ppa;
+    struct Page *pg = Get_Empty_Page_From_Finder1();
+    
+    if (pg == NULL){
+        ppa = Get_Empty_PPA(HotLevel);
+    }else{
+        ppa.ch = pg->addr.ch;
+        ppa.lun = pg->addr.lun;
+        ppa.pl = pg->addr.pl;
+        ppa.blk = pg->addr.blk;
+        ppa.sublk = pg->addr.sublk;
+        ppa.pg = pg->addr.pg;
+    }
+
+    return ppa;
+}
 
 int Is_Block_Full(struct Block *blk)
 {
@@ -1190,6 +1277,7 @@ void Mark_Sublock_Free(struct Block *blk, struct Sublock *sublk)
     sublk->ipc = 0;
     sublk->epc = pgs_per_sublk;
     sublk->state = NonVictim;
+    sublk->have_invalid_sensitive_page = FALSE;
 
     // 更新page的資訊
     for (int i=0; i<pgs_per_sublk; i++){
@@ -1218,14 +1306,24 @@ void Mark_Sublock_Free(struct Block *blk, struct Sublock *sublk)
     List->epc = List->epc + used_pg;
 }
 
-int do_gc(void)
+int do_gc(struct Block *secure_deletion_blk, int need_secure_deletion)
 {
     printf("do gc !!\n");
-    
-    struct Block *victim_blk = Get_Victim_Block_From_Finder1();
-    if (victim_blk == NULL){
-        printf("12088 No Victim Block\n");
-        return Stop_GC;
+    // Print_Finder1();
+    struct Block *victim_blk = NULL;
+    if (need_secure_deletion == TRUE){
+        printf("1315 do secure deletion\n");
+        victim_blk = secure_deletion_blk;
+        if (victim_blk == NULL){
+            printf("1314 err\n");
+            abort();
+        }
+    }else{
+        victim_blk = Get_Victim_Block_From_Finder1();
+        if (victim_blk == NULL){
+            printf("1323 No Victim Block\n");
+            return Stop_GC;
+        }
     }
 
     printf("Victim Block %d\n", victim_blk->block_id);
@@ -1243,7 +1341,11 @@ int do_gc(void)
     for (int i=0; i<sublks_per_blk; i++){
         struct Sublock *victim_sublk = &victim_blk->sublk[i];
         // printf("victim sublk (%d), vpc %d, ipc %d, epc %d, state %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc, victim_sublk->state);
-        if (victim_sublk->state == Victim){
+        if (victim_sublk->state == Victim || victim_sublk->have_invalid_sensitive_page == TRUE){
+            if (victim_sublk->have_invalid_sensitive_page == TRUE){
+                printf("1343 victim sublk(%d) have invalid pg, vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);
+            }
+
             // 將victim sublk vpc、ipc資訊記下來
             total_victim_sublk_vpc += victim_sublk->vpc;
             total_victim_sublk_ipc += victim_sublk->ipc;
@@ -1252,22 +1354,24 @@ int do_gc(void)
             Clean_One_Sublock(victim_sublk);
             printf("1237 After Clean Blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
             printf("1238 After Clean Sublk(%d), vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);            
+            
+            // 更新block資訊
+            if (victim_sublk->state == Victim){ // 有可能victim sublk不是victim stata，但是sublk have invalid sensitive page
+                victim_blk->victim_sublk_count--;
+                if (victim_blk->victim_sublk_count < 0){
+                    printf("1363 err\n");
+                    abort();
+                }
+                victim_blk->Nonvictim_sublk_count++;
+                if (victim_blk->Nonvictim_sublk_count > sublks_per_blk){
+                    printf("1368 err\n");
+                    abort();
+                }
+            }
 
             Mark_Sublock_Free(victim_blk, victim_sublk);
             printf("1241 After MarkFree Blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
             printf("1242 After MarkFree Sublk(%d), vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);
-            
-            // 更新block資訊
-            victim_blk->victim_sublk_count--;
-            if (victim_blk->victim_sublk_count < 0){
-                printf("1060 err\n");
-                abort();
-            }
-            victim_blk->Nonvictim_sublk_count++;
-            if (victim_blk->Nonvictim_sublk_count > sublks_per_blk){
-                printf("1065 err\n");
-                abort();
-            }
         }
     }
 
@@ -1284,104 +1388,285 @@ int do_gc(void)
     }
 
     printf("Clean blk(%d), vpc %d, ipc %d, epc %d, position %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc, victim_blk->position);
+    Print_Finder1();
     printf("do gc over\n");
 
     return Finish_GC;
 }
 
-void ssd_write(int lba)
-{  
-   int is_new_lba = 1;
-   int lba_HotLevel = 0;
-   int Blocks_per_linkedList = (Total_Block / nHotLevel); // 5
+void do_secure_deletion(struct ppa *secure_deletion_table, int index)
+{
+    for (int i=0; i<index; i++){
+        struct Block *victim_blk = get_blk(&secure_deletion_table[i]);
+        if (victim_blk == NULL){
+            printf("1392 err\n");
+            abort();
+        }
+        // 要先把victim blk從finder1移除
+        if (victim_blk->victim_sublk_count > 0){
+            printf("1403 Blk(%d) vpc %d ipc %d epc %d vsubc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc, victim_blk->victim_sublk_count);
+            Print_All_Block();
+            Remove_Block_Finder1(victim_blk->victim_sublk_count, victim_blk);
+        }
+        int r = do_gc(victim_blk, TRUE);
+    }
+}
 
-   while (Enforce_do_gc() == TRUE){
-        int r = do_gc();
+void trim(int slba, int size)
+{
+    int start_lba = slba;
+    int end_lba = start_lba + size -1;
+    // secure deletion會用到的變數
+   int need_do_secure_deletion = FALSE;
+   int *secure_deletion_map = (int *)malloc(Total_Block * sizeof(int));
+   for (int block_id=0; block_id<Total_Block; block_id++){
+        secure_deletion_map[block_id] = 0;
+   }
+   int index = 0;
+   struct ppa *secure_deletion_table = (struct ppa *)malloc(size * sizeof(struct ppa));
+
+    for (int lba=start_lba; lba<=end_lba; lba++){
+        
+        if (mapped(lba) == MAPPED){
+            printf("start trim !!\n");
+
+            struct ppa *ppa = get_maplba(lba);
+            set_rmap(ppa, NO_SETTING);
+
+            // 找出Block 
+            struct Block *blk = get_blk(ppa);
+            if (blk == NULL){
+                printf("1442 err\n");
+            }
+
+            // 找出Sublock
+            struct Sublock *sublk = get_sublk(ppa);
+            if (sublk == NULL){
+                printf("1448 err\n");
+            }
+
+            // 找出Page 
+            struct Page *pg = get_pg(ppa);
+            if (pg == NULL){ 
+                printf("1454 err\n"); 
+            }
+
+            // 確認要不要做secure deletion
+            if (pg->type == Sensitive){
+                need_do_secure_deletion = TRUE;
+                if (secure_deletion_map[blk->block_id] == 0){ // block尚未紀錄
+                    
+                    secure_deletion_map[blk->block_id] = 1;
+                    struct ppa blk_ppa;
+                    blk_ppa.ch = pg->addr.ch;
+                    blk_ppa.lun = pg->addr.lun;
+                    blk_ppa.pl = pg->addr.pl;
+                    blk_ppa.blk = pg->addr.blk;
+                    secure_deletion_table[index] = blk_ppa;
+                    index++;
+                }
+            }
+
+            // Mark Page Invalid 
+            Mark_Page_Invalid(ppa);
+
+            // 如果Page是Sensitive Type的話，需要把Page的Sublock->have_invalid_sensitive_page變成TRUE
+            if (pg->type == Sensitive){
+                sublk->have_invalid_sensitive_page = TRUE;
+            }
+
+            // 更新ppa
+            clear_maplba(lba);
+        }
+    }
+
+    // 執行secure deletion
+   if (need_do_secure_deletion == TRUE){
+        do_secure_deletion(secure_deletion_table, index);
+   }
+   free(secure_deletion_table);
+}
+
+void ssd_write(int slba, int size)
+{  
+   int start_lba = slba;
+   int end_lba = start_lba + size -1;
+   // secure deletion會用到的變數
+   int need_do_secure_deletion = FALSE;
+   int *secure_deletion_map = (int *)malloc(Total_Block * sizeof(int));
+   for (int block_id=0; block_id<Total_Block; block_id++){
+        secure_deletion_map[block_id] = 0;
+   }
+   int index = 0;
+   struct ppa *secure_deletion_table = (struct ppa *)malloc(size * sizeof(struct ppa));
+
+    while (Enforce_do_gc() == TRUE){
+        int r = do_gc(NULL, FALSE);
         
         if (r == Stop_GC){
             Print_SSD_State();
-            printf("1282 err Enforce GC Not Find Victim Blk\n");
+            printf("1508 Warning Enforce GC Not Find Victim Blk\n");
+            printf("Total vpc %d, ipc %d, epc %d\n", Total_vpc, Total_ipc, Total_epc);
+            if (Total_epc < 2*pgs_per_blk){
+                printf("1511 err, Total epc < %d empty pgs, we need %d empty pgs be cache, the cache can't store data.\n", (2*pgs_per_blk), (2*pgs_per_blk));
+                abort();   
+            }
+            break;
+        }
+    }
+
+   for (int lba=start_lba; lba<=end_lba; lba++){
+        int is_new_lba = 1;
+        int lba_HotLevel = 0;
+
+        printf("write lba %d\n", lba);
+        if (lba >= (Total_Block * pgs_per_blk)){
+            printf("837 err\n");
             abort();
         }
-   }
-   
-   printf("write lba %d\n", lba);
-   if (lba >= (Total_Block * pgs_per_blk)){
-        printf("837 err\n");
-        abort();
-   }
 
-   if (mapped(lba) == MAPPED){ // lba不是第一次寫入
-        printf("mapped \n");
-        // 設定lba、ppa的轉換
-        struct ppa *ppa = get_maplba(lba);
-        set_rmap(ppa, NO_SETTING); // 因為lba會指向新的ppa，所以舊的ppa指向NO_SETTING
+        if (mapped(lba) == MAPPED){ // lba不是第一次寫入
+            printf("mapped \n");
+            // 設定lba、ppa的轉換
+            struct ppa *ppa = get_maplba(lba);
+            set_rmap(ppa, NO_SETTING); // 因為lba會指向新的ppa，所以舊的ppa指向NO_SETTING
 
-        // 找出Block 
-        struct Block *blk = get_blk(ppa);
+            // 找出Block 
+            struct Block *blk = get_blk(ppa);
+            if (blk == NULL){
+                printf("1442 err\n");
+            }
+
+            // 找出Sublock
+            struct Sublock *sublk = get_sublk(ppa);
+            if (sublk == NULL){
+                printf("1448 err\n");
+            }
+
+            // 找出Page 
+            struct Page *pg = get_pg(ppa);
+            if (pg == NULL){ 
+                printf("1454 err\n"); 
+            }
+
+            // 確認要不要做secure deletion
+            if (pg->type == Sensitive){
+                need_do_secure_deletion = TRUE;
+                if (secure_deletion_map[blk->block_id] == 0){ // block尚未紀錄
+                    
+                    secure_deletion_map[blk->block_id] = 1;
+                    
+                    struct ppa blk_ppa;
+                    blk_ppa.ch = pg->addr.ch;
+                    blk_ppa.lun = pg->addr.lun;
+                    blk_ppa.pl = pg->addr.pl;
+                    blk_ppa.blk = pg->addr.blk;
+                    secure_deletion_table[index] = blk_ppa;
+                    index++;
+                }
+            }
+
+            // Mark Page Invalid 
+            Mark_Page_Invalid(ppa);
+            
+            is_new_lba = 0;
+            lba_HotLevel = pg->LBA_HotLevel;
+
+            // 如果Page是Sensitive Type的話，需要把Page的Sublock->have_invalid_sensitive_page變成TRUE
+            if (pg->type == Sensitive){
+                sublk->have_invalid_sensitive_page = TRUE;
+            }
+        }
+
+        if (is_new_lba == 0){
+            if (++lba_HotLevel == nHotLevel){ // 限制lba Hotlevel上限
+                lba_HotLevel = nHotLevel-1;
+            }
+        }
+
+        // Sensitive、General LBA的存取
+        struct ppa ppa;
+        if (boundary_1<=lba && lba<=boundary_2){
+            ppa = Get_Empty_PPA_For_Senitive_LBA(lba_HotLevel);
+        }else{
+            ppa = Get_Empty_PPA(lba_HotLevel);
+        }
+        set_maplba(lba, ppa);
+        set_rmap(&ppa, lba);
+
+        struct Block *blk = get_blk(&ppa);
         if (blk == NULL){
-            printf("847 err\n");
+            printf("871 err\n");
         }
-        // 找出Page 
-        struct Page *pg = get_pg(ppa);
-        if (pg == NULL){ 
-            printf("852 err\n"); 
+
+        struct Page *pg = get_pg(&ppa);
+        if (pg == NULL){
+            printf("876 err\n");
         }
-        // Mark Page Invalid 
-        Mark_Page_Invalid(ppa);
 
-        is_new_lba = 0;
-        lba_HotLevel = pg->LBA_HotLevel;
-   }
-
-   if (is_new_lba == 0){
-        if (++lba_HotLevel == nHotLevel){ // 限制lba Hotlevel上限
-            lba_HotLevel = nHotLevel-1;
+        Mark_Page_Valid(&ppa);
+        // 設定page的屬性
+        pg->LBA_HotLevel = lba_HotLevel;
+        if (boundary_1<=lba && lba<=boundary_2){
+            pg->type = Sensitive;
+        }else{
+            pg->type = General;
         }
-   }
-   struct ppa ppa = Get_Empty_PPA(lba_HotLevel);
-   set_maplba(lba, ppa);
-   set_rmap(&ppa, lba);
-   
-   struct Block *blk = get_blk(&ppa);
-   if (blk == NULL){
-        printf("871 err\n");
-   }
-   
-   struct Page *pg = get_pg(&ppa);
-   if (pg == NULL){
-        printf("876 err\n");
-   }
-   
-   Mark_Page_Valid(&ppa);
-   pg->LBA_HotLevel = lba_HotLevel;
 
-   printf("lba %d -> ppa (ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d)\n", lba, ppa.ch, ppa.lun, ppa.pl, ppa.blk, ppa.sublk, ppa.pg);
-   printf("lba HotLevel %d, write page state %d\n",pg->LBA_HotLevel, pg->state);
-   printf("blk(%d) vpc %d, ipc %d, epc %d, position %d\n",blk->block_id, blk->vpc, blk->ipc, blk->epc, blk->position);
-   
-   if ( (blk->ipc+blk->vpc)>pgs_per_blk ){
-        printf("887 err \n");
-        abort();
-    }   
-   printf("\n");
+        printf("lba %d -> ppa (ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d)\n", lba, ppa.ch, ppa.lun, ppa.pl, ppa.blk, ppa.sublk, ppa.pg);
+        printf("lba HotLevel %d, write page state %d, type %d\n",pg->LBA_HotLevel, pg->state, pg->type);
+        printf("blk(%d) vpc %d, ipc %d, epc %d, position %d\n",blk->block_id, blk->vpc, blk->ipc, blk->epc, blk->position);
+
+        if ( (blk->ipc+blk->vpc)>pgs_per_blk ){
+            printf("887 err \n");
+            abort();
+        }
+        printf("\n");
+   }
+
+   // 執行secure deletion
+   if (need_do_secure_deletion == TRUE){
+        do_secure_deletion(secure_deletion_table, index);
+   }
+   free(secure_deletion_table);
 }
+
+// 初始亂數種子
+void initRandom() {
+    srand((unsigned int)time(NULL));
+}
+
+// 產生指定範圍內的亂數
+int getRandomNumber(int min, int max) {
+    return min + rand() % (max - min + 1);
+}
+
 
 int main(void)
 {
     Init();
+    initRandom();
 
     int count = 0;
-    for (int i=0; i<20; i++){
-        for(int lba=0; lba<7; lba++){
-            ssd_write(lba);
-            
-            if (should_do_gc() == TRUE){
-                do_gc();
-            }
-            count++;
+    for (int lba=0; lba<20; lba++)
+    {
+        ssd_write(lba, 1);
+        
+        if (should_do_gc() == TRUE){
+            do_gc(NULL, FALSE);
         }
+        count++;
     }
+
+    for (int lba=10; lba<30; lba++){
+        ssd_write(lba, 1);
+        
+        if (should_do_gc() == TRUE){
+            do_gc(NULL, FALSE);
+        }
+        count++;
+    }
+
     Print_SSD_State();
     printf("Task over Execute time %d!!\n", count);
 }
