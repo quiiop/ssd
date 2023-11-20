@@ -5,6 +5,10 @@ struct Finder2 finder2;
 struct ppa *maplba; // maplba是lba -> ppa
 int *rmap;  // rmap是ppa -> lba
 struct SSD *ssd;
+struct Over_Provisioning OP; 
+double move_pg_cnt = 0;
+double write_pg_cnt = 0;
+
 
 // 初始化Node 
 struct Node* init_node(struct Block *blk)
@@ -304,6 +308,17 @@ void ssd_init(void)
     printf("SSD init finish \n");
 }
 
+// 初始化OP
+/*void init_OP(void){
+    OP.size = 1;
+    OP.blk = (struct Block *)malloc(OP.size * sizeof(struct Block));
+    struct Block *blk = OP.blk;
+    
+    for (int s=0; s<sublks_per_blk; s++){
+        
+    }
+}*/
+
 // maplba的操作
 void set_maplba(int lba, struct ppa ppa)
 {
@@ -570,11 +585,18 @@ void Print_All_Block(void)
 
 void Print_SSD_State(void)
 {
+    printf("Start Print Finder2------------\n");
+    Print_Finder2();
+    
+    printf("Start Print All Block------------\n");
+    Print_All_Block();
+    
+    printf("Start Print Finder1------------\n");
+    Print_Finder1();
+    
+    printf("Total Info---------------------\n");
     printf("Total Empty Block %d\n", Total_Empty_Block);
     printf("Total vpc %d, Total ipc %d, Total epc %d\n", Total_vpc, Total_ipc, Total_epc);
-    Print_Finder2();
-    Print_All_Block();
-    Print_Finder1();
 }
 
 // Block在Finder2搬移的操作
@@ -1215,7 +1237,9 @@ void GC_Write(struct Page *pg)
     if ( (blk->ipc+blk->vpc)>pgs_per_blk ){
         printf("965 err \n");
         abort();
-    }   
+    }
+
+    move_pg_cnt++;   
 }
 
 void Clean_One_Sublock(struct Sublock *sublk)
@@ -1412,6 +1436,81 @@ void do_secure_deletion(struct ppa *secure_deletion_table, int index)
     }
 }
 
+void trim(int slba, int size)
+{
+    int start_lba = slba;
+    int end_lba = start_lba + size -1;
+    // secure deletion會用到的變數
+   int need_do_secure_deletion = FALSE;
+   int *secure_deletion_map = (int *)malloc(Total_Block * sizeof(int));
+   for (int block_id=0; block_id<Total_Block; block_id++){
+        secure_deletion_map[block_id] = 0;
+   }
+   int index = 0;
+   struct ppa *secure_deletion_table = (struct ppa *)malloc(size * sizeof(struct ppa));
+
+    for (int lba=start_lba; lba<=end_lba; lba++){
+        
+        if (mapped(lba) == MAPPED){
+            printf("start trim !!\n");
+
+            struct ppa *ppa = get_maplba(lba);
+            set_rmap(ppa, NO_SETTING);
+
+            // 找出Block 
+            struct Block *blk = get_blk(ppa);
+            if (blk == NULL){
+                printf("1442 err\n");
+            }
+
+            // 找出Sublock
+            struct Sublock *sublk = get_sublk(ppa);
+            if (sublk == NULL){
+                printf("1448 err\n");
+            }
+
+            // 找出Page 
+            struct Page *pg = get_pg(ppa);
+            if (pg == NULL){ 
+                printf("1454 err\n"); 
+            }
+
+            // 確認要不要做secure deletion
+            if (pg->type == Sensitive){
+                need_do_secure_deletion = TRUE;
+                if (secure_deletion_map[blk->block_id] == 0){ // block尚未紀錄
+                    
+                    secure_deletion_map[blk->block_id] = 1;
+                    struct ppa blk_ppa;
+                    blk_ppa.ch = pg->addr.ch;
+                    blk_ppa.lun = pg->addr.lun;
+                    blk_ppa.pl = pg->addr.pl;
+                    blk_ppa.blk = pg->addr.blk;
+                    secure_deletion_table[index] = blk_ppa;
+                    index++;
+                }
+            }
+
+            // Mark Page Invalid 
+            Mark_Page_Invalid(ppa);
+
+            // 如果Page是Sensitive Type的話，需要把Page的Sublock->have_invalid_sensitive_page變成TRUE
+            if (pg->type == Sensitive){
+                sublk->have_invalid_sensitive_page = TRUE;
+            }
+
+            // 更新ppa
+            clear_maplba(lba);
+        }
+    }
+
+    // 執行secure deletion
+   if (need_do_secure_deletion == TRUE){
+        do_secure_deletion(secure_deletion_table, index);
+   }
+   free(secure_deletion_table);
+}
+
 void ssd_write(int slba, int size)
 {  
    int start_lba = slba;
@@ -1430,11 +1529,13 @@ void ssd_write(int slba, int size)
         
         if (r == Stop_GC){
             Print_SSD_State();
-            printf("1282 err Enforce GC Not Find Victim Blk\n");
+            printf("1508 Warning Enforce GC Not Find Victim Blk\n");
             printf("Total vpc %d, ipc %d, epc %d\n", Total_vpc, Total_ipc, Total_epc);
             if (Total_epc < 2*pgs_per_blk){
+                printf("1511 err, Total epc < %d empty pgs, we need %d empty pgs be cache, the cache can't store data.\n", (2*pgs_per_blk), (2*pgs_per_blk));
                 abort();   
             }
+            break;
         }
     }
 
@@ -1545,6 +1646,8 @@ void ssd_write(int slba, int size)
             abort();
         }
         printf("\n");
+
+        write_pg_cnt++;
    }
 
    // 執行secure deletion
@@ -1554,26 +1657,69 @@ void ssd_write(int slba, int size)
    free(secure_deletion_table);
 }
 
-/*
-    要新增強制GC的功能。
-    當Total_epc < 2個Block Page的大小時，需要進行強制GC的功能，
-*/
+// 初始亂數種子
+void initRandom() {
+    // srand((unsigned int)time(NULL));
+    unsigned int SEED  = 100;
+    srand(SEED);
+}
+
+// 產生指定範圍內的亂數
+int getRandomNumber(int min, int max) {
+    return min + rand() % (max - min + 1);
+}
+
+void WA(void)
+{
+    double wa = (write_pg_cnt + move_pg_cnt) / write_pg_cnt;
+    printf("write pg cnt %f\n", write_pg_cnt);
+    printf("move pg cnt %f\n", move_pg_cnt);
+    printf("WA = %f\n", wa);
+}
 
 int main(void)
 {
     Init();
+    initRandom();
 
     int count = 0;
-    for (int i=0; i<2; i++){
-        for(int lba=0; lba<110; lba=lba+8){
-            ssd_write(lba, 8);
-            
-            if (should_do_gc() == TRUE){
-                do_gc(NULL, FALSE);
-            }
-            count++;
+    // write
+    for (int i=0; i<20; i++){
+        int lba = getRandomNumber(0, 130);
+        //printf("lba %d\n", lba);
+        ssd_write(lba, 8);
+        
+        if (should_do_gc() == TRUE){
+            do_gc(NULL, FALSE);
         }
+        count++;
     }
+    
+    // trim
+    for (int i=0; i<10; i++){
+        int lba = getRandomNumber(0, 130);
+        trim(lba, 8);
+    }
+    
+    // write
+    for (int i=0; i<20; i++){
+        int lba = getRandomNumber(0, 130);
+        //printf("lba %d\n", lba);
+        ssd_write(lba, 8);
+        
+        if (should_do_gc() == TRUE){
+            do_gc(NULL, FALSE);
+        }
+        count++;
+    }
+
+    // trim
+    for (int i=0; i<10; i++){
+        int lba = getRandomNumber(0, 130);
+        trim(lba, 8);
+    }
+
     Print_SSD_State();
-    printf("Task over Execute time %d!!\n", count);
+    printf("Task over Execute time %d !!\n", count);
+    WA();
 }

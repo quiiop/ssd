@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #ifndef SSD_H
 #define SSD_H
@@ -46,8 +47,8 @@ int Total_ipc = 0;
 int Total_epc = 0;
 
 /*SSD的參數*/ 
-const int pgs_per_sublk = 3;  //3
-const int sublks_per_blk = 3; //3
+const int pgs_per_sublk = 9;  //3
+const int sublks_per_blk = 1; //3
 const int blks_per_pl = 16;   //16
 const int pls_per_lun = 1;
 const int luns_per_ch = 1;
@@ -64,7 +65,7 @@ const int nLayers_Finder1 = sublks_per_blk;
 
 /*Finder2的參數*/
 const int Total_Block = nblks;
-const int nHotLevel = 8;
+const int nHotLevel = 8; // 預設是8，最多nblks
 const int Blocks_per_linkedList = (Total_Block / nHotLevel);
 const int pgs_per_linkedList = Blocks_per_linkedList * pgs_per_blk;
 int Current_Block_Count = 0;
@@ -72,7 +73,6 @@ int Current_Block_Count = 0;
 /*設定sensitive的range*/
 const int boundary_1 = 30;
 const int boundary_2 = 60;
-
 
 struct ppa
 {
@@ -144,6 +144,12 @@ struct Channel
 {
     int id;
     struct Lun *lun;
+};
+
+struct Over_Provisioning
+{
+    struct Block *blk;
+    int size;
 };
 
 struct SSD
