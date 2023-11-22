@@ -40,6 +40,11 @@
 #define TRUE 1
 #define FALSE 0
 
+/*OP的參數*/
+#define OP_ID -1
+#define OP_SUCCESSFUL 1
+
+
 /*用於Debug or 控制是否GC*/
 int Total_Empty_Block = 0;
 int Total_vpc = 0;
@@ -47,8 +52,8 @@ int Total_ipc = 0;
 int Total_epc = 0;
 
 /*SSD的參數*/ 
-const int pgs_per_sublk = 9;  //3
-const int sublks_per_blk = 1; //3
+const int pgs_per_sublk = 3;  //3
+const int sublks_per_blk = 3; //3
 const int blks_per_pl = 16;   //16
 const int pls_per_lun = 1;
 const int luns_per_ch = 1;
@@ -203,4 +208,5 @@ struct Finder2
 };
 
 void Print_SSD_State(void);
+int Enforce_Clean_Block(struct Block *victim_blk);
 #endif
