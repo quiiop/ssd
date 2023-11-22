@@ -1439,10 +1439,10 @@ int do_gc(struct Block *secure_deletion_blk, int need_secure_deletion)
             have_victim_sublk = TRUE;
             if (enforce_clean_block_id != victim_blk->block_id){
                 enforce_clean_block_id = Clean_One_Sublock(victim_blk, victim_sublk);
-            }else{
+            }/*else{
                 printf("1442 enforce blk id %d, victim blk id %d\n", enforce_clean_block_id, victim_blk->block_id);
                 printf("1443 victim_blk(%d), vpc %d, ipc %d, epc %d", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
-            }
+            }*/
             printf("1237 After Clean Blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
             printf("1238 After Clean Sublk(%d), vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);            
             
@@ -1465,6 +1465,11 @@ int do_gc(struct Block *secure_deletion_blk, int need_secure_deletion)
             }
             printf("1241 After MarkFree Blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
             printf("1242 After MarkFree Sublk(%d), vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);
+
+            // 更新block position
+            if (enforce_clean_block_id != victim_blk->block_id){
+                Move_Block_Position(victim_blk, victim_blk_vpc, victim_blk_ipc, victim_blk_epc, total_victim_sublk_vpc, total_victim_sublk_ipc);
+            }
         }
     }
 
@@ -1472,14 +1477,14 @@ int do_gc(struct Block *secure_deletion_blk, int need_secure_deletion)
     victim block所有的victim sublk都會被清除，所以victim block經過do_gc()後也就不應該再finder1了。*/
 
     // 更新block position
-    if (have_victim_sublk == TRUE){
+    /*if (have_victim_sublk == TRUE){
         printf("move victim blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
         Move_Block_Position(victim_blk, victim_blk_vpc, victim_blk_ipc, victim_blk_epc, total_victim_sublk_vpc, total_victim_sublk_ipc);
     }else{
         printf("1454 warning No victim sublk\n");
         Print_All_Block();
         // abort();
-    }
+    }*/
 
     printf("Clean blk(%d), vpc %d, ipc %d, epc %d, position %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc, victim_blk->position);
     Print_Finder1();
@@ -1624,6 +1629,9 @@ void Move_VictimBlk_Vpc_To_OP(struct Page *pg, struct Page *temp_pg)
         printf("1587 err\n");
         abort();
     }
+
+    // 更新WA資料
+    move_pg_cnt++;
 }
 
 struct Node* OP_remove_block_from_emptyList(struct Block *victim_blk)
@@ -1814,6 +1822,8 @@ void OP_get_pg_to_VictimBlk(struct Page *op_pg, struct Page *pg, struct Block *b
     // 更新統計資料
     Total_vpc++;
     Total_epc--;
+    // 更新WA資料
+    move_pg_cnt++;
 }
 
 void OP_move_victim_blk_to_emptyList(struct Node *current)
@@ -2256,9 +2266,9 @@ int main(void)
         }
     }
     
+    printf("OVER -----------------------\n");
     printf("Task over , Execute times %d\n", count);
-    printf("Total Info---------------------\n");
     printf("Total Empty Block %d\n", Total_Empty_Block);
     printf("Total vpc %d, Total ipc %d, Total epc %d\n", Total_vpc, Total_ipc, Total_epc);
-    Print_All_Block();
+    WA();
 }

@@ -52,8 +52,8 @@ int Total_ipc = 0;
 int Total_epc = 0;
 
 /*SSD的參數*/ 
-const int pgs_per_sublk = 3;  //3
-const int sublks_per_blk = 3; //3
+const int pgs_per_sublk = 9;  //3
+const int sublks_per_blk = 1; //3
 const int blks_per_pl = 16;   //16
 const int pls_per_lun = 1;
 const int luns_per_ch = 1;
