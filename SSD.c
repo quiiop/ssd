@@ -272,7 +272,7 @@ void init_lun(struct Lun *lun, int id, int cid)
         printf("127 err\n");
     }
     for (int i=0; i<pls_per_lun; i++){
-        init_plane(&lun->pl[i], id, cid, lun->id);
+        init_plane(&lun->pl[i], i, cid, lun->id);
     }
 }
 
@@ -284,7 +284,7 @@ void init_channel(struct Channel *ch, int id)
         printf("136 err\n");
     }
     for (int i=0; i<luns_per_ch; i++){
-        init_lun(&ch->lun[i], id, ch->id);
+        init_lun(&ch->lun[i], i, ch->id);
     }
 }
 
@@ -2246,37 +2246,14 @@ int main(void)
     int count = 0;
     
     // write
-    for (int i=0; i<20; i++){
-        int lba = getRandomNumber(0, 130);
+    for (int i=0; i<execute_count; i++){ 
+        int lba = getRandomNumber(0, Max_Random);
         ssd_write(lba, 8);
         
         if (should_do_gc() == TRUE){
             do_gc(NULL, FALSE);
         }
         count++;
-    }
-    
-    // trim
-    for (int i=0; i<10; i++){
-        int lba = getRandomNumber(0, 100);
-        trim(lba, 8);
-    }
-
-    // write
-    for (int i=0; i<20; i++){
-        int lba = getRandomNumber(0, 130);
-        ssd_write(lba, 8);
-        
-        if (should_do_gc() == TRUE){
-            do_gc(NULL, FALSE);
-        }
-        count++;
-    }
-
-    // trim
-    for (int i=0; i<10; i++){
-        int lba = getRandomNumber(0, 100);
-        trim(lba, 8);
     }
 
     printf("OVER -----------------------\n");

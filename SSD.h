@@ -44,7 +44,6 @@
 #define OP_ID -1
 #define OP_SUCCESSFUL 1
 
-
 /*用於Debug or 控制是否GC*/
 int Total_Empty_Block = 0;
 int Total_vpc = 0;
@@ -52,13 +51,14 @@ int Total_ipc = 0;
 int Total_epc = 0;
 
 /*SSD的參數*/ 
-const int pgs_per_sublk =  3;  //3
-const int sublks_per_blk = 3; //3
-const int blks_per_pl = 16;   //16
+const int pgs_per_sublk =  16;  //3
+const int sublks_per_blk = 16; //3
+const int blks_per_pl = 512;   //16
 const int pls_per_lun = 1;
 const int luns_per_ch = 1;
 const int nchs = 1;
-const int nblks = nchs*luns_per_ch*pls_per_lun*blks_per_pl; 
+const int nblks = nchs*luns_per_ch*pls_per_lun*blks_per_pl;
+const int npgs = nblks * sublks_per_blk * pgs_per_sublk; 
 
 const int pgs_per_blk = sublks_per_blk*pgs_per_sublk;
 const int pgs_per_pl = pgs_per_blk*blks_per_pl;
@@ -75,9 +75,13 @@ const int Blocks_per_linkedList = (Total_Block / nHotLevel);
 const int pgs_per_linkedList = Blocks_per_linkedList * pgs_per_blk;
 int Current_Block_Count = 0;
 
+/*執行的參數*/
+const int execute_count = npgs * 0.7 / 8;
+const int Max_Random = npgs * 0.8;
+
 /*設定sensitive的range*/
-const int boundary_1 = 30;
-const int boundary_2 = 60;
+const int boundary_1 = 0.25 * Max_Random;
+const int boundary_2 = 0.5 * Max_Random;
 
 struct ppa
 {
