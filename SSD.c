@@ -5,6 +5,10 @@ struct Finder2 finder2;
 struct ppa *maplba; // maplba是lba -> ppa
 int *rmap;  // rmap是ppa -> lba
 struct SSD *ssd;
+struct Over_Provisioning OP; 
+double move_pg_cnt = 0;
+double write_pg_cnt = 0;
+
 
 // 初始化Node 
 struct Node* init_node(struct Block *blk)
@@ -117,11 +121,7 @@ struct Block *Get_Victim_Block_From_Finder1(void)
 
     if (current == NULL){
         printf("118 Warning !! Not Find Victim Blk\n");
-        /*沒有找到Victim Block不一定是錯誤的，因為有時候連續大批資料寫入寫會導致觸發了should_do_gc，但是所有的資料都是valid page，這時候就會發現沒有Victim Block可以處理，但是如果是Enforce_do_gc觸觸發的話，就一定要找出Victim Block*/
-        
-        //Print_Finder1();
-        //Print_SSD_State();
-        //abort();
+        /*沒有找到Victim Block不一定是錯誤的，因為有時候連續大批資料寫入寫會導致觸發了should_do_gc，但是所有的資料都是valid page，這時候就會發現沒有Victim Block可以處理*/
         return NULL;
     }
 
@@ -304,6 +304,50 @@ void ssd_init(void)
     printf("SSD init finish \n");
 }
 
+// 初始化OP
+void init_OP(void){
+    // 初始化OP
+    OP.size = 1;
+    OP.blk = (struct Block *)malloc(OP.size * sizeof(struct Block));
+    // 初始化Block
+    struct Block *blk = &OP.blk[0];
+    blk->sublk = (struct Sublock *)malloc(sublks_per_blk * sizeof(struct Sublock));
+    blk->id = OP_ID;
+    blk->block_id = OP_ID;
+    blk->vpc = 0;
+    blk->ipc = 0;
+    blk->epc = pgs_per_blk;
+    blk->victim_sublk_count = 0;
+    blk->Nonvictim_sublk_count = sublks_per_blk;
+    blk->position = NO_SETTING;
+    // 初始化Sublock
+    for (int s=0; s<sublks_per_blk; s++){
+        struct Sublock *sublk = &blk->sublk[s];
+        sublk->pg = (struct Page *)malloc(pgs_per_sublk * sizeof(struct Page));
+        sublk->id = s;
+        sublk->vpc = 0;
+        sublk->ipc = 0;
+        sublk->epc = pgs_per_sublk;
+        sublk->state = NonVictim;
+        sublk->have_invalid_sensitive_page = FALSE;
+        for (int p=0; p<pgs_per_sublk; p++){
+            struct Page *pg = &sublk->pg[p];
+            pg->addr.ch = NO_SETTING;
+            pg->addr.lun = NO_SETTING;
+            pg->addr.pl = NO_SETTING;
+            pg->addr.blk = NO_SETTING;
+            pg->addr.sublk = NO_SETTING;
+            pg->addr.pg = NO_SETTING;
+            pg->id = p;
+            pg->state = NO_SETTING;
+            pg->LBA_HotLevel = NO_SETTING;
+            pg->type = NO_SETTING;
+        }
+    }
+
+    printf("Finish Op init\n");
+}
+
 // maplba的操作
 void set_maplba(int lba, struct ppa ppa)
 {
@@ -422,6 +466,7 @@ void Init(void)
     // print_finder2();
     init_maplba();
     init_rmap();
+    init_OP();
     printf("Init Finish \n");
 
 }
@@ -570,9 +615,16 @@ void Print_All_Block(void)
 
 void Print_SSD_State(void)
 {
+    printf("Start Print Finder2------------\n");
     Print_Finder2();
+    
+    printf("Start Print All Block------------\n");
     Print_All_Block();
+    
+    printf("Start Print Finder1------------\n");
     Print_Finder1();
+    
+    printf("Total Info---------------------\n");
     printf("Total Empty Block %d\n", Total_Empty_Block);
     printf("Total vpc %d, Total ipc %d, Total epc %d\n", Total_vpc, Total_ipc, Total_epc);
 }
@@ -831,7 +883,7 @@ void Mark_Page_Valid(struct ppa *ppa)
     list->vpc++;
     list->epc--;
     if (list->epc < 0){
-        printf("756 err\n");
+        printf("756 err, ArrayList Position %d\n", ArrayList_Position);
         Print_Finder2();
         abort();
     }
@@ -840,7 +892,7 @@ void Mark_Page_Valid(struct ppa *ppa)
     Total_vpc++;
     Total_epc--;
     if (Total_epc < 0){
-        printf("764 err\n");
+        printf("764 err, ArrayList Position %d\n", ArrayList_Position);
         abort();
     }
 
@@ -1025,7 +1077,18 @@ void HotLevel_Order(int *array, int HotLevel)
 struct ppa Get_Empty_PPA(int HotLevel) // For General LBA
 {
     if (Total_Empty_Block == 0){
-        printf("394 No Empty Block err\n");
+        /*int r = Enforce_Clean_Block();
+        if (r == OP_SUCCESSFUL){
+            if (Total_Empty_Block == 0){
+                printf("1087 err\n");
+                abort();
+            }
+        }else{
+            printf("1091 No Empty Block err\n");
+            abort();
+        }*/
+        Print_All_Block();
+        printf("1091 No Empty Block err\n");
         abort();
     }
 
@@ -1189,6 +1252,7 @@ void GC_Write(struct Page *pg)
     set_rmap(&old_ppa, NO_SETTING); //把old_ppa指向non setting
 
     // 取得新的ppa
+    printf("1259 GC Write\n");
     int lba_HotLevel = pg->LBA_HotLevel;
     struct ppa new_ppa = Get_Empty_PPA(lba_HotLevel);
     set_maplba(lba, new_ppa);
@@ -1207,7 +1271,6 @@ void GC_Write(struct Page *pg)
     Mark_Page_Valid(&new_ppa);
     new_pg->LBA_HotLevel = lba_HotLevel;
     
-    printf("GC write\n");
     printf("New lba %d -> ppa (ch %d, lun %d, pl %d, blk %d, sublk %d, pg %d)\n", lba, new_ppa.ch, new_ppa.lun, new_ppa.pl, new_ppa.blk, new_ppa.sublk, new_ppa.pg);
     printf("New lba HotLevel %d, write page state %d\n",new_pg->LBA_HotLevel, new_pg->state);
     printf("blk(%d) vpc %d, ipc %d, epc %d, position %d\n",blk->block_id, blk->vpc, blk->ipc, blk->epc, blk->position);
@@ -1215,26 +1278,43 @@ void GC_Write(struct Page *pg)
     if ( (blk->ipc+blk->vpc)>pgs_per_blk ){
         printf("965 err \n");
         abort();
-    }   
+    }
+
+    move_pg_cnt++;   
 }
 
-void Clean_One_Sublock(struct Sublock *sublk)
-{
+int Clean_One_Sublock(struct Block *blk ,struct Sublock *sublk)
+{   
     if (sublk == NULL){
         printf("935 err\n");
         abort();
     }
 
+    int enforce_clean_block_id = NO_SETTING;
     for (int i=0; i<pgs_per_sublk; i++){
         struct Page *pg = &sublk->pg[i];
+        
         if (pg == NULL){
             printf("942 err\n");
             abort();
         }
+        
         if (pg->state == VALID){
-            GC_Write(pg);
+            // clean sublk 時因為會需要先搬移valid pg，所以有可能導致ssd space不足
+            if (Total_epc == 0){ 
+                printf("1309 enforce clean block\n");
+                enforce_clean_block_id = Enforce_Clean_Block(blk);
+                if (enforce_clean_block_id == NO_SETTING){ // 應該要有enforce block id
+                    printf("1311 err\n");
+                    abort();
+                }
+            }
+            if (enforce_clean_block_id != blk->block_id){ // 如果Enforce clean blk不是現在的blk，才需要做GC Write
+                GC_Write(pg);
+            }
         }
     }
+    return enforce_clean_block_id;
 }
 
 void Mark_Sublock_Free(struct Block *blk, struct Sublock *sublk)
@@ -1338,9 +1418,11 @@ int do_gc(struct Block *secure_deletion_blk, int need_secure_deletion)
     int total_victim_sublk_vpc = 0;
     int total_victim_sublk_ipc = 0;
 
+    // 確認enforce clean block 跟 GC blk，這兩個blk是否相同
+    int enforce_clean_block_id = NO_SETTING;
+
     for (int i=0; i<sublks_per_blk; i++){
         struct Sublock *victim_sublk = &victim_blk->sublk[i];
-        // printf("victim sublk (%d), vpc %d, ipc %d, epc %d, state %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc, victim_sublk->state);
         if (victim_sublk->state == Victim || victim_sublk->have_invalid_sensitive_page == TRUE){
             if (victim_sublk->have_invalid_sensitive_page == TRUE){
                 printf("1343 victim sublk(%d) have invalid pg, vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);
@@ -1351,12 +1433,17 @@ int do_gc(struct Block *secure_deletion_blk, int need_secure_deletion)
             total_victim_sublk_ipc += victim_sublk->ipc;
 
             have_victim_sublk = TRUE;
-            Clean_One_Sublock(victim_sublk);
+            if (enforce_clean_block_id != victim_blk->block_id){ // 檢查看看如果有觸發enforce clean blk，強制清除的blk跟現在GC的blk是否相同，如果相同本次GC就不用做了
+                enforce_clean_block_id = Clean_One_Sublock(victim_blk, victim_sublk);
+            }/*else{
+                printf("1442 enforce blk id %d, victim blk id %d\n", enforce_clean_block_id, victim_blk->block_id);
+                printf("1443 victim_blk(%d), vpc %d, ipc %d, epc %d", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
+            }*/
             printf("1237 After Clean Blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
             printf("1238 After Clean Sublk(%d), vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);            
             
             // 更新block資訊
-            if (victim_sublk->state == Victim){ // 有可能victim sublk不是victim stata，但是sublk have invalid sensitive page
+            if (victim_sublk->state == Victim){ // 有可能gc victim sublk不是victim state，但是sublk have invalid sensitive page, 如果是因為有invalid sensitive pg的話，就不用更新blk info
                 victim_blk->victim_sublk_count--;
                 if (victim_blk->victim_sublk_count < 0){
                     printf("1363 err\n");
@@ -1369,23 +1456,21 @@ int do_gc(struct Block *secure_deletion_blk, int need_secure_deletion)
                 }
             }
 
-            Mark_Sublock_Free(victim_blk, victim_sublk);
+            if (enforce_clean_block_id != victim_blk->block_id){
+                Mark_Sublock_Free(victim_blk, victim_sublk);
+            }
             printf("1241 After MarkFree Blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
             printf("1242 After MarkFree Sublk(%d), vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);
+
+            // 更新block position
+            if (enforce_clean_block_id != victim_blk->block_id){
+                Move_Block_Position(victim_blk, victim_blk_vpc, victim_blk_ipc, victim_blk_epc, total_victim_sublk_vpc, total_victim_sublk_ipc);
+            }
         }
     }
 
     /* 不需要擔心block在finder1的位置，finder1是根據block的victim sublk cnt來決定blk的存放位置，Get_Victim_Block_From_Finder1()回傳victim block後，victim block是已經從finder1移除了，而經過do_gc()處理後  
     victim block所有的victim sublk都會被清除，所以victim block經過do_gc()後也就不應該再finder1了。*/
-
-    // 更新block position
-    if (have_victim_sublk == TRUE){
-        printf("move victim blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
-        Move_Block_Position(victim_blk, victim_blk_vpc, victim_blk_ipc, victim_blk_epc, total_victim_sublk_vpc, total_victim_sublk_ipc);
-    }else{
-        printf("1082 err No victim sublk\n");
-        abort();
-    }
 
     printf("Clean blk(%d), vpc %d, ipc %d, epc %d, position %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc, victim_blk->position);
     Print_Finder1();
@@ -1405,7 +1490,6 @@ void do_secure_deletion(struct ppa *secure_deletion_table, int index)
         // 要先把victim blk從finder1移除
         if (victim_blk->victim_sublk_count > 0){
             printf("1403 Blk(%d) vpc %d ipc %d epc %d vsubc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc, victim_blk->victim_sublk_count);
-            Print_All_Block();
             Remove_Block_Finder1(victim_blk->victim_sublk_count, victim_blk);
         }
         int r = do_gc(victim_blk, TRUE);
@@ -1487,6 +1571,500 @@ void trim(int slba, int size)
    free(secure_deletion_table);
 }
 
+// Over Provisioning 的操作
+void Move_VictimBlk_Vpc_To_OP(struct Page *pg, struct Page *temp_pg)
+{
+    // 取得valid pge的lba
+    struct ppa old_ppa;
+    old_ppa.ch = pg->addr.ch;
+    old_ppa.lun = pg->addr.lun;
+    old_ppa.pl = pg->addr.pl;
+    old_ppa.blk = pg->addr.blk;
+    old_ppa.sublk = pg->addr.sublk;
+    old_ppa.pg = pg->addr.pg;
+    int lba = get_rmap(&old_ppa);
+
+    // 交換資料
+    // 把victim blk的pg addr記在OP temp pg，是因為當從OP把pg存回清除過後的victim blk時，需要知道valid pg原本對應的lba是哪個
+    temp_pg->addr.ch = pg->addr.ch;
+    temp_pg->addr.lun = pg->addr.lun;
+    temp_pg->addr.pl = pg->addr.pl;
+    temp_pg->addr.blk = pg->addr.blk;
+    temp_pg->addr.sublk = pg->addr.sublk;
+    temp_pg->addr.pg = pg->addr.pg;
+    
+    temp_pg->state = pg->state;
+    temp_pg->LBA_HotLevel = pg->LBA_HotLevel;
+    temp_pg->type = pg->type;
+
+
+    // 清除lba和ppa之間的關係
+    clear_maplba(lba);
+
+    // 更新OP Block的資料
+    struct Block *op_blk = &OP.blk[0];
+    op_blk->vpc++;
+    op_blk->epc--;
+    if (op_blk->vpc > pgs_per_blk){
+        printf("1581 err\n");
+        abort();
+    }
+    if (op_blk->epc < 0){
+        printf("1587 err\n");
+        abort();
+    }
+
+    // 更新WA資料
+    move_pg_cnt++;
+}
+
+struct Node* OP_remove_block_from_emptyList(struct Block *victim_blk)
+{
+    // 把victim blk從Empty List移除
+    int ArrayList_Position = victim_blk->block_id / Blocks_per_linkedList;
+    struct ArrayList *Array = &finder2.Array[ArrayList_Position];
+    struct LinkedList *Empty = &Array->Empty;
+    struct LinkedList *NonEmpty = &Array->NonEmpty;
+    struct Node *First_Node = Empty->head.next; 
+    struct Node *current = NULL;
+    struct Node *Previous = NULL;
+
+    if (First_Node == NULL){
+        printf("1584 err\n");
+        abort();
+    }
+
+    for (current=Empty->head.next; current!=NULL; current=current->next){
+        if (current->blk == victim_blk){
+            if (current == First_Node){
+                Empty->head.next = current->next;
+                current->next = NULL;
+            }else{
+                Previous->next = current->next;
+                current->next = NULL;
+            }
+            Empty->size--;
+            printf("1610 OP Move Node %d, vpc %d, ipc %d, epc %d\n", current->blk->id, current->blk->vpc, current->blk->ipc, current->blk->epc);
+            break;
+        }
+        Previous = current;
+    }
+
+    // 更新Empty List的info
+    printf("1617 OP Before EmptyList(%d) state : vpc %d, ipc %d, epc %d\n",Array->array_id, Empty->vpc, Empty->ipc, Empty->epc);
+    Empty->vpc = Empty->vpc - victim_blk->vpc;
+    Empty->ipc = Empty->ipc - victim_blk->ipc;
+    Empty->epc = Empty->epc - victim_blk->epc;
+    printf("1621 OP After EmptyList(%d) state : vpc %d, ipc %d, epc %d\n",Array->array_id, Empty->vpc, Empty->ipc, Empty->epc);
+
+    //更新統計的資料
+    Total_Empty_Block--;
+
+    // 自我檢測
+    if (Empty->vpc < 0 || NonEmpty->vpc < 0){
+        printf("1658 err\n");
+        abort();
+    }
+    if (Empty->ipc < 0 || NonEmpty->ipc < 0){
+        printf("1662 err\n");
+        abort();
+    }
+    if (Empty->epc < 0 || NonEmpty->epc < 0){
+        printf("1666 err\n");
+        abort();
+    }
+
+    return current;
+}
+
+struct Node *OP_remove_block_from_nonemptyList(struct Block *victim_blk)
+{
+    // 把victim blk從nonEmpty list移除
+    int ArrayList_Position = victim_blk->block_id / Blocks_per_linkedList;
+    struct ArrayList *Array = &finder2.Array[ArrayList_Position];
+    struct LinkedList *Empty = &Array->Empty;
+    struct LinkedList *NonEmpty = &Array->NonEmpty;
+
+    struct Node *First_Node = NonEmpty->head.next; 
+    struct Node *current = NULL;
+    struct Node *Previous = NULL;
+
+    if (First_Node == NULL){
+        printf("1623 err \n");
+        abort();
+    }
+
+    //把current node從NonEmpty List移除 
+    for (current=NonEmpty->head.next; current != NULL; current=current->next){
+        if (current->blk == victim_blk){
+            if (current == First_Node){
+                NonEmpty->head.next = current->next;
+                current->next = NULL;
+            }else{
+                Previous->next = current->next;
+                current->next = NULL;
+            }
+            NonEmpty->size--;
+            printf("1667 OP Move Node %d, vpc %d, ipc %d, epc %d\n", current->blk->id, current->blk->vpc, current->blk->ipc, current->blk->epc);
+            break;
+        }
+        Previous = current;
+    }
+
+    //更新NonEmpty List的狀態
+    printf("1674 OP Before NonEmptyList(%d) state : vpc %d, ipc %d, epc %d\n",Array->array_id, NonEmpty->vpc, NonEmpty->ipc, NonEmpty->epc);
+    NonEmpty->vpc = NonEmpty->vpc - victim_blk->vpc;
+    NonEmpty->ipc = NonEmpty->ipc - victim_blk->ipc;
+    NonEmpty->epc = NonEmpty->epc - victim_blk->epc;
+    printf("1678 OP After NonEmptyList(%d) state : vpc %d, ipc %d, epc %d\n",Array->array_id, NonEmpty->vpc, NonEmpty->ipc, NonEmpty->epc);
+
+    // 自我檢測
+    if (Empty->vpc < 0 || NonEmpty->vpc < 0){
+        printf("1685 err\n");
+        abort();
+    }
+    if (Empty->ipc < 0 || NonEmpty->ipc < 0){
+        printf("1689 err\n");
+        abort();
+    }
+    if (Empty->epc < 0 || NonEmpty->epc < 0){
+        printf("1693 err\n");
+        abort();
+    }
+
+    return current;
+}
+
+void OP_Mark_Free_Block(struct Block *victim_block)
+{
+    // 更新統計資訊
+    Total_vpc = Total_vpc - victim_block->vpc;
+    Total_ipc = Total_ipc - victim_block->ipc;
+    Total_epc = Total_epc + (victim_block->vpc + victim_block->ipc);
+
+    for (int s=0; s<sublks_per_blk; s++){
+        struct Sublock *sublk = &victim_block->sublk[s];
+        
+        for (int p=0; p<pgs_per_sublk; p++){
+            // 更新page的資料
+            struct Page *pg = &sublk->pg[p];
+            pg->state = EMPTY;
+            pg->LBA_HotLevel = NO_SETTING;
+            pg->type = NO_SETTING;
+        }
+
+        // 更新sublk的資訊
+        sublk->vpc = 0;
+        sublk->ipc = 0;
+        sublk->epc = pgs_per_sublk;
+        sublk->state = NonVictim;
+        sublk->have_invalid_sensitive_page = FALSE;
+    }
+
+    // 更新blk的資訊
+    victim_block->vpc = 0;
+    victim_block->ipc = 0;
+    victim_block->epc = pgs_per_blk;
+    victim_block->victim_sublk_count = 0;
+    victim_block->Nonvictim_sublk_count = sublks_per_blk;
+    victim_block->position = IN_Empty;
+}
+
+void OP_get_pg_to_VictimBlk(struct Page *op_pg, struct Page *pg, struct Block *blk, struct Sublock *sublk)
+{
+    // Page 之間交換資料
+    pg->state = op_pg->state;
+    pg->LBA_HotLevel = op_pg->LBA_HotLevel;
+    pg->type = op_pg->type;
+
+    // 設定lba 和 ppa的關係
+    struct ppa old_ppa;
+    old_ppa.ch = op_pg->addr.ch;
+    old_ppa.lun = op_pg->addr.lun;
+    old_ppa.pl = op_pg->addr.pl;
+    old_ppa.blk = op_pg->addr.blk;
+    old_ppa.sublk = op_pg->addr.sublk;
+    old_ppa.pg = op_pg->addr.pg;
+    int lba = get_rmap(&old_ppa);
+
+    struct ppa new_ppa;
+    new_ppa.ch = pg->addr.ch;
+    new_ppa.lun = pg->addr.lun;
+    new_ppa.pl = pg->addr.pl;
+    new_ppa.blk = pg->addr.blk;
+    new_ppa.sublk = pg->addr.sublk;
+    new_ppa.pg = pg->addr.pg;
+
+    // 設定lba新的對應ppa
+    set_maplba(lba, new_ppa);
+    set_rmap(&new_ppa, lba);
+    
+    // 更新sublk
+    sublk->vpc++;
+    sublk->epc--;
+    // 更新blk
+    blk->vpc++;
+    blk->epc--;
+    // 更新統計資料
+    Total_vpc++;
+    Total_epc--;
+    // 更新WA資料
+    move_pg_cnt++;
+}
+
+void OP_move_victim_blk_to_emptyList(struct Node *current)
+{
+    struct Block *victim_blk = current->blk;
+    int ArrayList_Position = victim_blk->block_id / Blocks_per_linkedList;
+    struct ArrayList *Array = &finder2.Array[ArrayList_Position];
+    struct LinkedList *Empty = &Array->Empty;
+
+    if (Empty->head.next == NULL){
+        // printf("list first add node \n");
+        Empty->head.next = current;
+    }else{
+        struct Node *Temp =NULL;
+        for (Temp=Empty->head.next; Temp->next!=NULL; Temp=Temp->next){
+            /* idle */
+        }
+        Temp->next = current;
+        // printf("add over\n");
+    }
+
+    // 更新Emprt List的資訊
+    Empty->vpc = Empty->vpc + current->blk->vpc;
+    Empty->ipc = Empty->ipc + current->blk->ipc;
+    Empty->epc = Empty->epc + current->blk->epc;
+    Empty->size++;
+
+    //更新統計的資料
+    Total_Empty_Block++;
+}
+
+void OP_mark_op_free(void)
+{
+    // Free OP block
+    struct Block *blk = &OP.blk[0];
+    blk->id = OP_ID;
+    blk->block_id = OP_ID;
+    blk->vpc = 0;
+    blk->ipc = 0;
+    blk->epc = pgs_per_blk;
+    blk->victim_sublk_count = 0;
+    blk->Nonvictim_sublk_count = sublks_per_blk;
+    blk->position = NO_SETTING;
+    // 初始化Sublock
+    for (int s=0; s<sublks_per_blk; s++){
+        struct Sublock *sublk = &blk->sublk[s];
+        sublk->id = s;
+        sublk->vpc = 0;
+        sublk->ipc = 0;
+        sublk->epc = pgs_per_sublk;
+        sublk->state = NonVictim;
+        sublk->have_invalid_sensitive_page = FALSE;
+        for (int p=0; p<pgs_per_sublk; p++){
+            struct Page *pg = &sublk->pg[p];
+            pg->addr.ch = NO_SETTING;
+            pg->addr.lun = NO_SETTING;
+            pg->addr.pl = NO_SETTING;
+            pg->addr.blk = NO_SETTING;
+            pg->addr.sublk = NO_SETTING;
+            pg->addr.pg = NO_SETTING;
+            pg->id = p;
+            pg->state = NO_SETTING;
+            pg->LBA_HotLevel = NO_SETTING;
+            pg->type = NO_SETTING;
+        }
+    }
+}
+
+void Print_OP_State(void)
+{
+    struct Block *blk = &OP.blk[0];
+    printf("OP state : vpc %d, ipc %d, epc %d\n", blk->vpc, blk->ipc, blk->epc);
+    
+    for (int s=0; s<sublks_per_blk; s++){
+        struct Sublock *sublk = &blk->sublk[s];
+
+        for (int p=0; p<pgs_per_sublk; p++){
+            struct Page *pg = &sublk->pg[p];
+            printf("s= %d, p= %d, pg state %d\n", s, p, pg->state);
+        }
+    }
+}
+
+int Enforce_Clean_Block(struct Block *victim_blk)
+{
+    int need_check_finder = TRUE;
+    if (victim_blk != NULL){
+        // 因為如果victim blk有指定，說明是從Clean_One_Sublock()觸發的，而Clean_One_Sublock()地victim blk是從do_gc傳來的，do_gc在傳來前就把victim blk在finedr1移除了
+        need_check_finder = FALSE; 
+    }
+    
+    // 有兩種方法和OP做資料交換, 1. 有指定victim_blk, 只會由Clean_One_Sublock()觸發 2. 不指定 NULL 就需要自己找victim blk
+    printf("1904 start enforce clean block\n");
+    if (victim_blk == NULL){
+        // 找出invalid pg最多的Block
+        struct ppa ppa;
+        int Max_ipc = 0;
+        for (int ch=0; ch<nchs; ch++){
+            for (int lun=0; lun<luns_per_ch; lun++){
+                for (int pl=0; pl<pls_per_lun; pl++){
+                    for (int blk=0; blk<blks_per_pl; blk++){
+                        ppa.ch = ch;
+                        ppa.lun = lun;
+                        ppa.pl = pl;
+                        ppa.blk = blk;
+
+                        struct Block *blk = get_blk(&ppa);
+                        if (Max_ipc < blk->ipc){
+                            victim_blk = blk;
+                            Max_ipc = blk->ipc;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (victim_blk == NULL){
+        printf("1572 err\n");
+        Print_All_Block();
+        if (Total_ipc == 0 && Total_epc == 0){
+            printf("1933 err SSD Space no enough !!\n");
+        }
+        abort();
+    }
+
+    if (victim_blk->ipc == 0){
+        printf("1577 err\n");
+        abort();
+    }
+    printf("1582 Enforce clean victim blk(%d) : vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
+    
+    // 判斷victim blk是否有需要從Finder1移除
+    if (need_check_finder == TRUE){
+        int victim_sublk_cnt = 0;
+        for (int i=0 ;i<sublks_per_blk; i++){
+            struct Sublock *sublk = &victim_blk->sublk[i];
+            if (sublk->state == Victim){
+                victim_sublk_cnt++;
+            }
+        }
+
+        if (victim_sublk_cnt!=0){
+            printf("1918 OP victim blk have %d victim sublk. \n", victim_sublk_cnt);
+            Remove_Block_Finder1(victim_sublk_cnt, victim_blk);
+        }
+    }
+    
+    // 先把 victim blk從Empty List or NonEmpty List 移除，記得list的狀態要更新
+    struct Node *current = NULL;
+    if (victim_blk->position == IN_Empty){
+        current = OP_remove_block_from_emptyList(victim_blk);
+    }else if(victim_blk->position == IN_NonEmpty){
+        current = OP_remove_block_from_nonemptyList(victim_blk);
+    }else{
+        printf("1615 err\n");
+        abort();
+    }
+    if (current == NULL){
+        printf("1755 err\n");
+        abort();
+    }
+    printf("1876 OP Move Node %d, vpc %d, ipc %d, epc %d\n", current->blk->id, current->blk->vpc, current->blk->ipc, current->blk->epc);
+    
+    // 把victim blk的valid pg移到 OP
+    int OP_sublk_index = 0;
+    int OP_pg_index = 0;
+    for (int s =0; s<sublks_per_blk; s++){
+        struct Sublock *sublk = &victim_blk->sublk[s];
+        /*if (sublk->state == Victim){
+            Print_All_Block();
+            printf("1609 warning, Have sublk is victim state .\n");
+            abort();
+        }*/
+
+        for (int p=0; p<pgs_per_sublk; p++){
+            struct Page *pg = &sublk->pg[p];
+            if (pg->state == VALID){
+                struct Page *temp_pg = &OP.blk[0].sublk[OP_sublk_index].pg[OP_pg_index];
+                Move_VictimBlk_Vpc_To_OP(pg, temp_pg);
+                
+                OP_pg_index++;
+                if (OP_pg_index == pgs_per_sublk){
+                    OP_sublk_index++;
+                    OP_pg_index = 0;
+                    
+                    if (OP_sublk_index == sublks_per_blk){
+                        printf("1625 err\n");
+                        abort();
+                    }
+                }
+            }
+        }
+    }
+    
+    // Mark Free victim blk
+    OP_Mark_Free_Block(victim_blk);
+
+    // 把OP的pg移回victim blk
+    int sublk_id = 0;
+    int pg_id = 0;
+    struct Block *op_blk = &OP.blk[0];
+    int stop = FALSE;
+
+    for (int s=0; s<sublks_per_blk; s++){
+        
+        struct Sublock *op_sublk = &op_blk->sublk[s];
+        for (int p=0; p<pgs_per_sublk; p++){
+            
+            struct Page *op_pg = &op_sublk->pg[p];
+            if (op_pg->state == NO_SETTING){
+                stop = TRUE;
+                break;
+            }
+
+            struct Sublock *victim_sublk = &victim_blk->sublk[sublk_id];
+            struct Page *victim_pg = &victim_blk->sublk[sublk_id].pg[pg_id];
+            OP_get_pg_to_VictimBlk(op_pg, victim_pg, victim_blk, victim_sublk);
+            
+            pg_id++;
+            if (pg_id == pgs_per_sublk){
+                sublk_id++;
+                pg_id = 0;
+            }
+        }
+        
+        if (stop == TRUE){
+            break;
+        } 
+    }
+    printf("1966 sublk id %d, page id %d\n", sublk_id, pg_id);
+
+    // 把victim blk移到對應的Empty list裡
+    OP_move_victim_blk_to_emptyList(current);
+    // Mark Free OP
+    OP_mark_op_free();
+
+    printf("OP finish, victim blk(%d) state vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
+    Print_Finder2();
+    return victim_blk->block_id;
+}
+
+int Check_whether_enforce_clean_blcok(void)
+{
+    if (Total_epc == 0){
+        printf("1996 warning, Total epc = %d !!\n", Total_epc);
+        /*if (Total_ipc == 0){
+            printf("2007 err, ssd space no enough\n");
+            abort();
+        }*/
+        return TRUE;   
+    }
+    return FALSE;
+}
+
 void ssd_write(int slba, int size)
 {  
    int start_lba = slba;
@@ -1501,21 +2079,26 @@ void ssd_write(int slba, int size)
    struct ppa *secure_deletion_table = (struct ppa *)malloc(size * sizeof(struct ppa));
 
     while (Enforce_do_gc() == TRUE){
+        printf("2028\n");
         int r = do_gc(NULL, FALSE);
         
         if (r == Stop_GC){
             Print_SSD_State();
             printf("1508 Warning Enforce GC Not Find Victim Blk\n");
             printf("Total vpc %d, ipc %d, epc %d\n", Total_vpc, Total_ipc, Total_epc);
-            if (Total_epc < 2*pgs_per_blk){
-                printf("1511 err, Total epc < %d empty pgs, we need %d empty pgs be cache, the cache can't store data.\n", (2*pgs_per_blk), (2*pgs_per_blk));
-                abort();   
+            if (Check_whether_enforce_clean_blcok() == TRUE){
+                Enforce_Clean_Block(NULL);
             }
             break;
         }
     }
 
    for (int lba=start_lba; lba<=end_lba; lba++){
+        // 有時候一口氣寫很大量的檔案，在寫入的過程中才產生空間不足的情況，所以每氣血入前先檢查看看
+        if (Check_whether_enforce_clean_blcok() == TRUE){
+            Enforce_Clean_Block(NULL);
+        }
+
         int is_new_lba = 1;
         int lba_HotLevel = 0;
 
@@ -1622,6 +2205,8 @@ void ssd_write(int slba, int size)
             abort();
         }
         printf("\n");
+
+        write_pg_cnt++;
    }
 
    // 執行secure deletion
@@ -1632,15 +2217,26 @@ void ssd_write(int slba, int size)
 }
 
 // 初始亂數種子
-void initRandom() {
-    srand((unsigned int)time(NULL));
+void initRandom() 
+{
+    // srand((unsigned int)time(NULL));
+    unsigned int SEED  = 100;
+    srand(SEED);
 }
 
 // 產生指定範圍內的亂數
-int getRandomNumber(int min, int max) {
+int getRandomNumber(int min, int max) 
+{
     return min + rand() % (max - min + 1);
 }
 
+void WA(void)
+{
+    double wa = (write_pg_cnt + move_pg_cnt) / write_pg_cnt;
+    printf("write pg cnt %f\n", write_pg_cnt);
+    printf("move pg cnt %f\n", move_pg_cnt);
+    printf("WA = %f\n", wa);
+}
 
 int main(void)
 {
@@ -1648,9 +2244,28 @@ int main(void)
     initRandom();
 
     int count = 0;
-    for (int lba=0; lba<20; lba++)
-    {
-        ssd_write(lba, 1);
+    
+    // write
+    for (int i=0; i<20; i++){
+        int lba = getRandomNumber(0, 130);
+        ssd_write(lba, 8);
+        
+        if (should_do_gc() == TRUE){
+            do_gc(NULL, FALSE);
+        }
+        count++;
+    }
+    
+    // trim
+    for (int i=0; i<10; i++){
+        int lba = getRandomNumber(0, 100);
+        trim(lba, 8);
+    }
+
+    // write
+    for (int i=0; i<20; i++){
+        int lba = getRandomNumber(0, 130);
+        ssd_write(lba, 8);
         
         if (should_do_gc() == TRUE){
             do_gc(NULL, FALSE);
@@ -1658,15 +2273,15 @@ int main(void)
         count++;
     }
 
-    for (int lba=10; lba<30; lba++){
-        ssd_write(lba, 1);
-        
-        if (should_do_gc() == TRUE){
-            do_gc(NULL, FALSE);
-        }
-        count++;
+    // trim
+    for (int i=0; i<10; i++){
+        int lba = getRandomNumber(0, 100);
+        trim(lba, 8);
     }
 
-    Print_SSD_State();
-    printf("Task over Execute time %d!!\n", count);
+    printf("OVER -----------------------\n");
+    printf("Task over , Execute times %d\n", count);
+    printf("Total Empty Block %d\n", Total_Empty_Block);
+    printf("Total vpc %d, Total ipc %d, Total epc %d\n", Total_vpc, Total_ipc, Total_epc);
+    WA();
 }
