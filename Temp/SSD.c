@@ -121,11 +121,7 @@ struct Block *Get_Victim_Block_From_Finder1(void)
 
     if (current == NULL){
         printf("118 Warning !! Not Find Victim Blk\n");
-        /*沒有找到Victim Block不一定是錯誤的，因為有時候連續大批資料寫入寫會導致觸發了should_do_gc，但是所有的資料都是valid page，這時候就會發現沒有Victim Block可以處理，但是如果是Enforce_do_gc觸觸發的話，就一定要找出Victim Block*/
-        
-        //Print_Finder1();
-        //Print_SSD_State();
-        //abort();
+        /*沒有找到Victim Block不一定是錯誤的，因為有時候連續大批資料寫入寫會導致觸發了should_do_gc，但是所有的資料都是valid page，這時候就會發現沒有Victim Block可以處理*/
         return NULL;
     }
 
@@ -1437,7 +1433,7 @@ int do_gc(struct Block *secure_deletion_blk, int need_secure_deletion)
             total_victim_sublk_ipc += victim_sublk->ipc;
 
             have_victim_sublk = TRUE;
-            if (enforce_clean_block_id != victim_blk->block_id){
+            if (enforce_clean_block_id != victim_blk->block_id){ // 檢查看看如果有觸發enforce clean blk，強制清除的blk跟現在GC的blk是否相同，如果相同本次GC就不用做了
                 enforce_clean_block_id = Clean_One_Sublock(victim_blk, victim_sublk);
             }/*else{
                 printf("1442 enforce blk id %d, victim blk id %d\n", enforce_clean_block_id, victim_blk->block_id);
@@ -1447,7 +1443,7 @@ int do_gc(struct Block *secure_deletion_blk, int need_secure_deletion)
             printf("1238 After Clean Sublk(%d), vpc %d, ipc %d, epc %d\n", victim_sublk->id, victim_sublk->vpc, victim_sublk->ipc, victim_sublk->epc);            
             
             // 更新block資訊
-            if (victim_sublk->state == Victim){ // 有可能victim sublk不是victim stata，但是sublk have invalid sensitive page
+            if (victim_sublk->state == Victim){ // 有可能gc victim sublk不是victim state，但是sublk have invalid sensitive page, 如果是因為有invalid sensitive pg的話，就不用更新blk info
                 victim_blk->victim_sublk_count--;
                 if (victim_blk->victim_sublk_count < 0){
                     printf("1363 err\n");
@@ -1476,16 +1472,6 @@ int do_gc(struct Block *secure_deletion_blk, int need_secure_deletion)
     /* 不需要擔心block在finder1的位置，finder1是根據block的victim sublk cnt來決定blk的存放位置，Get_Victim_Block_From_Finder1()回傳victim block後，victim block是已經從finder1移除了，而經過do_gc()處理後  
     victim block所有的victim sublk都會被清除，所以victim block經過do_gc()後也就不應該再finder1了。*/
 
-    // 更新block position
-    /*if (have_victim_sublk == TRUE){
-        printf("move victim blk(%d), vpc %d, ipc %d, epc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
-        Move_Block_Position(victim_blk, victim_blk_vpc, victim_blk_ipc, victim_blk_epc, total_victim_sublk_vpc, total_victim_sublk_ipc);
-    }else{
-        printf("1454 warning No victim sublk\n");
-        Print_All_Block();
-        // abort();
-    }*/
-
     printf("Clean blk(%d), vpc %d, ipc %d, epc %d, position %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc, victim_blk->position);
     Print_Finder1();
     printf("do gc over\n");
@@ -1504,10 +1490,8 @@ void do_secure_deletion(struct ppa *secure_deletion_table, int index)
         // 要先把victim blk從finder1移除
         if (victim_blk->victim_sublk_count > 0){
             printf("1403 Blk(%d) vpc %d ipc %d epc %d vsubc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc, victim_blk->victim_sublk_count);
-            Print_All_Block();
             Remove_Block_Finder1(victim_blk->victim_sublk_count, victim_blk);
         }
-        printf("1482\n");
         int r = do_gc(victim_blk, TRUE);
     }
 }
@@ -1636,6 +1620,7 @@ void Move_VictimBlk_Vpc_To_OP(struct Page *pg, struct Page *temp_pg)
 
 struct Node* OP_remove_block_from_emptyList(struct Block *victim_blk)
 {
+    // 把victim blk從Empty List移除
     int ArrayList_Position = victim_blk->block_id / Blocks_per_linkedList;
     struct ArrayList *Array = &finder2.Array[ArrayList_Position];
     struct LinkedList *Empty = &Array->Empty;
@@ -1694,6 +1679,7 @@ struct Node* OP_remove_block_from_emptyList(struct Block *victim_blk)
 
 struct Node *OP_remove_block_from_nonemptyList(struct Block *victim_blk)
 {
+    // 把victim blk從nonEmpty list移除
     int ArrayList_Position = victim_blk->block_id / Blocks_per_linkedList;
     struct ArrayList *Array = &finder2.Array[ArrayList_Position];
     struct LinkedList *Empty = &Array->Empty;
@@ -1915,7 +1901,7 @@ int Enforce_Clean_Block(struct Block *victim_blk)
         need_check_finder = FALSE; 
     }
     
-    // 有兩種方法和OP做資料交換, 1. 有指定victim_blk, 只會由Clean_One_Sublock()觸發 2. 不指定 NULL
+    // 有兩種方法和OP做資料交換, 1. 有指定victim_blk, 只會由Clean_One_Sublock()觸發 2. 不指定 NULL 就需要自己找victim blk
     printf("1904 start enforce clean block\n");
     if (victim_blk == NULL){
         // 找出invalid pg最多的Block
@@ -2264,6 +2250,14 @@ int main(void)
             }
             count++;
         }
+        /*for (int lba=0; lba<100; lba=lba+8){
+            trim(lba, 8);
+            
+            int r = 0;
+            if (should_do_gc() == TRUE){
+                r = do_gc(NULL, FALSE);
+            }
+        }*/
     }
     
     printf("OVER -----------------------\n");
