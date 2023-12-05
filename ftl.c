@@ -48,7 +48,10 @@ struct Over_Provisioning OP;
 double move_pg_cnt = 0;
 double write_pg_cnt = 0;
 
+/*預宣告*/
+static int Enforce_Clean_Block(struct ssd *ssd, struct nand_block *victim_blk);
 static void *ftl_thread(void *arg);
+static struct nand_page *Get_Empty_Page_From_Finder1(void);
 
 static inline bool should_gc(struct ssd *ssd)
 {
@@ -111,7 +114,7 @@ static uint64_t get_rmap(struct ssd *ssd, struct ppa *ppa)
 }
 
 /* set rmap[page_no(ppa)] -> lpn */
-static void set_rmap(struct ssd *ssd, uint64_t lpn, struct ppa *ppa)
+static void set_rmap(struct ssd *ssd, struct ppa *ppa, uint64_t lpn)
 {
     uint64_t pgidx = ppa2pgidx(ssd, ppa);
 
@@ -733,7 +736,7 @@ static inline struct nand_block *get_blk(struct ssd *ssd, struct ppa *ppa)
     return &(pl->blk[ppa->g.blk]);
 }
 
-static inline struct nandd_sublock *get_sublk(struct ssd *ssd, struct ppa *ppa)
+static inline struct nand_sublock *get_sublk(struct ssd *ssd, struct ppa *ppa)
 {
     struct nand_block *blk = get_blk(ssd, ppa);
     return &(blk->sublk[ppa->g.sublk]);
@@ -988,20 +991,20 @@ static void Remove_Block_To_Empty(struct nand_block *blk) //int victim_blk_vpc, 
     }
 }
 
-static void Update_EmptyList(struct nand_block *blk) //, int total_victim_sublk_vpc, int total_victim_sublk_ipc
+/*static void Update_EmptyList(struct nand_block *blk) //, int total_victim_sublk_vpc, int total_victim_sublk_ipc
 {
     int ArrayList_Position = blk->block_id / Blocks_per_linkedList;
     struct ArrayList *Array = &finder2.Array[ArrayList_Position];
     struct LinkedList *Empty = &Array->Empty;
     struct LinkedList *NonEmpty = &Array->NonEmpty;
 
-    /*Empty->vpc = Empty->vpc - total_victim_sublk_vpc;
+    Empty->vpc = Empty->vpc - total_victim_sublk_vpc;
     Empty->ipc = Empty->ipc - total_victim_sublk_ipc;
-    Empty->epc = Empty->epc + (total_victim_sublk_vpc+total_victim_sublk_ipc);*/
-    // printf("724 Update EmptyList vpc %d, ipc %d, epc %d\n", Empty->vpc, Empty->ipc, Empty->epc);
-}
+    Empty->epc = Empty->epc + (total_victim_sublk_vpc+total_victim_sublk_ipc);
+    printf("724 Update EmptyList vpc %d, ipc %d, epc %d\n", Empty->vpc, Empty->ipc, Empty->epc);
+}*/
 
-void Move_Block_Position(struct nand_block *blk, int victim_blk_vpc, int victim_blk_ipc, int victim_blk_epc, int total_victim_sublk_vpc, int total_victim_sublk_ipc)
+static void Move_Block_Position(struct nand_block *blk, int victim_blk_vpc, int victim_blk_ipc, int victim_blk_epc, int total_victim_sublk_vpc, int total_victim_sublk_ipc)
 {
     /*
     Rmove_Block_To_NonEmpty()是當Mark Page Valid時，發現blk no empty page時，把blk從EmptyList移到NonEmptyList，所以在搬移前block.position一定在EmptyList。
@@ -1016,7 +1019,8 @@ void Move_Block_Position(struct nand_block *blk, int victim_blk_vpc, int victim_
     if (blk->position == IN_NonEmpty){
         Remove_Block_To_Empty(blk); //, victim_blk_vpc, victim_blk_ipc, victim_blk_epc
     }else{ // blk->position == IN_Empty
-        Update_EmptyList(blk); //, total_victim_sublk_vpc, total_victim_sublk_ipc
+        // skip
+        // Update_EmptyList(blk); //, total_victim_sublk_vpc, total_victim_sublk_ipc
     }
     //Remove_Block_To_Empty(blk, victim_blk_vpc, victim_blk_ipc, victim_blk_epc);
 }
@@ -1024,21 +1028,21 @@ void Move_Block_Position(struct nand_block *blk, int victim_blk_vpc, int victim_
 // Mark Page Valid 的操作
 static void Mark_Page_Valid(struct ssd *ssd, struct ppa *ppa)
 {
-    struct nand_block *blk = get_blk(ppa);
+    struct nand_block *blk = get_blk(ssd, ppa);
     if (blk == NULL){
-        printf("590 err\n");
+        printf("1029 err\n");
         abort();
     }
 
-    struct nand_sublock *sublk = get_sublk(ppa);
+    struct nand_sublock *sublk = get_sublk(ssd, ppa);
     if (sublk == NULL){
-        printf("596 err\n");
+        printf("1035 err\n");
         abort();
     }
     
-    struct nand_page *pg = get_pg(ppa);
+    struct nand_page *pg = get_pg(ssd, ppa);
     if (pg == NULL){
-        printf("602 err\n");
+        printf("1041 err\n");
         abort();
     }
 
@@ -1049,7 +1053,7 @@ static void Mark_Page_Valid(struct ssd *ssd, struct ppa *ppa)
     }else if (blk->position == IN_NonEmpty){
         list = &finder2.Array[ArrayList_Position].NonEmpty;
     }else{
-        printf("613 err\n");
+        printf("1053 err\n");
     }
     
     // 更新Page狀態
@@ -1059,7 +1063,7 @@ static void Mark_Page_Valid(struct ssd *ssd, struct ppa *ppa)
     sublk->vpc++;
     sublk->epc--;
     if (sublk->epc < 0 || sublk->epc > pgs_per_sublk){
-        printf("740 err\n");
+        printf("1062 err\n");
         abort();
     }
 
@@ -1067,7 +1071,7 @@ static void Mark_Page_Valid(struct ssd *ssd, struct ppa *ppa)
     blk->vpc++;
     blk->epc--;
     if (blk->epc < 0 || blk->epc > pgs_per_blk){
-        printf("748 err\n");
+        printf("1070 err\n");
         abort();
     }
 
@@ -1075,8 +1079,8 @@ static void Mark_Page_Valid(struct ssd *ssd, struct ppa *ppa)
     list->vpc++;
     list->epc--;
     if (list->epc < 0){
-        printf("756 err, ArrayList Position %d\n", ArrayList_Position);
-        Print_Finder2();
+        printf("1078 err, ArrayList Position %d\n", ArrayList_Position);
+        // Print_Finder2();
         abort();
     }
 
@@ -1084,7 +1088,7 @@ static void Mark_Page_Valid(struct ssd *ssd, struct ppa *ppa)
     Total_vpc++;
     Total_epc--;
     if (Total_epc < 0){
-        printf("764 err, ArrayList Position %d\n", ArrayList_Position);
+        printf("1087 err, ArrayList Position %d\n", ArrayList_Position);
         abort();
     }
 
@@ -1099,23 +1103,39 @@ static void Mark_Page_Valid(struct ssd *ssd, struct ppa *ppa)
     }
 }
 
+// Mark Page Invalid 的操作
+static int Check_Sublk_Victim(struct nand_sublock *sublk)
+{
+    if (sublk->ipc == pgs_per_sublk){
+        return Victim;
+    }
+
+    double n = (sublk->vpc+sublk->ipc) / sublk->vpc;
+    // printf("866 n = %f\n", n);
+    if (n >= 2){
+        return Victim;
+    }else{
+        return NonVictim;
+    }
+}
+
 static void Mark_Page_Invalid(struct ssd *ssd, struct ppa *ppa)
 {
-    struct nand_block *blk = get_blk(ppa);
+    struct nand_block *blk = get_blk(ssd, ppa);
     if (blk == NULL){
-        printf("479 err\n");
+        printf("1106 err\n");
         abort();
     }
 
-    struct nand_sublock *sublk = get_sublk(ppa);
+    struct nand_sublock *sublk = get_sublk(ssd, ppa);
     if (sublk == NULL){
-        printf("485 err\n");
+        printf("1112 err\n");
         abort();
     }
     
-    struct nand_page *pg = get_pg(ppa);
+    struct nand_page *pg = get_pg(ssd, ppa);
     if (pg == NULL){
-        printf("491 err\n");
+        printf("1118 err\n");
         abort();
     }
 
@@ -1126,7 +1146,7 @@ static void Mark_Page_Invalid(struct ssd *ssd, struct ppa *ppa)
     }else if (blk->position == IN_NonEmpty){
         list = &finder2.Array[ArrayList_Position].NonEmpty;
     }else{
-        printf("502 err\n");
+        printf("1129 err\n");
         abort();
     }
 
@@ -1198,7 +1218,7 @@ static struct nand_page *Get_Empty_Page(struct nand_block *blk)
     return NULL;
 }
 
-static struct Block *Get_Empty_Block(int HotLevel)
+static struct nand_block *Get_Empty_Block(int HotLevel)
 {
     // 統一回傳第一個Block 
     struct LinkedList *List = &finder2.Array[HotLevel].Empty;
@@ -1282,13 +1302,13 @@ static struct ppa Get_Empty_PPA(int HotLevel) // For General LBA
         }
     }
     if (blk == NULL){
-        printf("399 No Empty Blk err\n");
+        printf("1302 No Empty Blk err\n");
         abort();
     }
     
-    struct Page *pg = Get_Empty_Page(blk);
+    struct nand_page *pg = Get_Empty_Page(blk);
     if (pg == NULL){
-        printf("805 err\n");
+        printf("1308 err\n");
         abort();
     }
 
@@ -1302,9 +1322,8 @@ static struct ppa Get_Empty_PPA(int HotLevel) // For General LBA
     return ppa;
 }
 
-static struct nand_page *Get_Empty_Page_From_Finder1()
+static struct nand_page *Get_Empty_Page_From_Finder1(void)
 {
-    struct nand_page *pg = NULL;
     for (int n=0; n<nLayers_Finder1; n++){
         
         struct ArrayList_1 *Array = &finder1.Array[n];
@@ -1381,7 +1400,8 @@ static struct ppa Get_Empty_PPA_For_Senitive_LBA(int HotLevel) // For Sensitive 
     return ppa;
 }
 
-static int Is_Block_Full(struct nand_block *blk)
+/*
+int Is_Block_Full(struct nand_block *blk)
 {
     if (blk->epc == 0){
         return TRUE;
@@ -1389,6 +1409,7 @@ static int Is_Block_Full(struct nand_block *blk)
         return FALSE;
     }
 }
+*/
 
 // GC的相關操作
 static int should_do_gc(void)
@@ -1414,7 +1435,7 @@ static int Enforce_do_gc(void)
 }
 
 // GC的相關操作
-static uint64_t GC_Write(struct nand_page *pg)
+static uint64_t GC_Write(struct ssd *ssd, struct nand_page *pg)
 {
     // 取得valid pge的lba
     struct ppa old_ppa;
@@ -1424,16 +1445,16 @@ static uint64_t GC_Write(struct nand_page *pg)
     old_ppa.g.blk = pg->addr.blk;
     old_ppa.g.sublk = pg->addr.sublk;
     old_ppa.g.pg = pg->addr.pg;
-    uint64_t lpn = get_rmap(&old_ppa);
+    uint64_t lpn = get_rmap(ssd, &old_ppa);
     //Mark_Page_Invalid(&old_ppa);
-    set_rmap(ssd, NO_SETTING, &old_ppa); //把old_ppa指向non setting
+    set_rmap(ssd, &old_ppa, NO_SETTING); //把old_ppa指向non setting
 
     // 取得新的ppa
     // printf("1259 GC Write\n");
     int lba_HotLevel = pg->LBA_HotLevel;
     struct ppa new_ppa = Get_Empty_PPA(lba_HotLevel);
     set_maplba(ssd, lpn, &new_ppa);
-    set_rmap(ssd, lpn, &new_ppa);
+    set_rmap(ssd, &new_ppa, lpn);
 
     struct nand_block *blk = get_blk(ssd, &new_ppa);
     if (blk == NULL){
@@ -1470,7 +1491,7 @@ static uint64_t GC_Write(struct nand_page *pg)
     return 0;
 }
 
-static int Clean_One_Sublock(struct nand_block *blk ,struct nand_sublock *sublk)
+static int Clean_One_Sublock(struct ssd *ssd, struct nand_block *blk ,struct nand_sublock *sublk)
 {   
     if (sublk == NULL){
         printf("935 err\n");
@@ -1490,14 +1511,14 @@ static int Clean_One_Sublock(struct nand_block *blk ,struct nand_sublock *sublk)
             // clean sublk 時因為會需要先搬移valid pg，所以有可能導致ssd space不足
             if (Total_epc == 0){ 
                 // printf("1309 enforce clean block\n");
-                enforce_clean_block_id = Enforce_Clean_Block(blk);
+                enforce_clean_block_id = Enforce_Clean_Block(ssd, blk);
                 if (enforce_clean_block_id == NO_SETTING){ // 應該要有enforce block id
                     printf("1311 err\n");
                     abort();
                 }
             }
             if (enforce_clean_block_id != blk->block_id){ // 如果Enforce clean blk不是現在的blk，才需要做GC Write
-                GC_Write(pg);
+                GC_Write(ssd, pg);
             }
         }
     }
@@ -1573,7 +1594,7 @@ static void Mark_Sublock_Free(struct nand_block *blk, struct nand_sublock *sublk
     List->epc = List->epc + used_pg;
 }
 
-static int do_gc(struct nand_block *secure_deletion_blk, int need_secure_deletion)
+static int do_gc(struct ssd *ssd, struct nand_block *secure_deletion_blk, int need_secure_deletion)
 {
     //printf("do gc !!\n");
     // Print_Finder1();
@@ -1597,7 +1618,7 @@ static int do_gc(struct nand_block *secure_deletion_blk, int need_secure_deletio
     //printf("Victim Blokc vpc %d, ipc %d, epc %d\n", victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
     //printf("Victim Block victim count %d, Nonvictim count %d, position %d\n", victim_blk->victim_sublk_count, victim_blk->Nonvictim_sublk_count, victim_blk->position);
 
-    int have_victim_sublk = FALSE;
+    //int have_victim_sublk = FALSE;
     int victim_blk_vpc = victim_blk->vpc;
     int victim_blk_ipc = victim_blk->ipc;
     int victim_blk_epc = victim_blk->epc;
@@ -1619,9 +1640,9 @@ static int do_gc(struct nand_block *secure_deletion_blk, int need_secure_deletio
             total_victim_sublk_vpc += victim_sublk->vpc;
             total_victim_sublk_ipc += victim_sublk->ipc;
 
-            have_victim_sublk = TRUE;
+            // have_victim_sublk = TRUE;
             if (enforce_clean_block_id != victim_blk->block_id){ // 檢查看看如果有觸發enforce clean blk，強制清除的blk跟現在GC的blk是否相同，如果相同本次GC就不用做了
-                enforce_clean_block_id = Clean_One_Sublock(victim_blk, victim_sublk);
+                enforce_clean_block_id = Clean_One_Sublock(ssd, victim_blk, victim_sublk);
             }/*else{
                 printf("1442 enforce blk id %d, victim blk id %d\n", enforce_clean_block_id, victim_blk->block_id);
                 printf("1443 victim_blk(%d), vpc %d, ipc %d, epc %d", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc);
@@ -1666,10 +1687,10 @@ static int do_gc(struct nand_block *secure_deletion_blk, int need_secure_deletio
     return Finish_GC;
 }
 
-static void do_secure_deletion(struct ppa *secure_deletion_table, int index)
+static void do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table, int index)
 {
     for (int i=0; i<index; i++){
-        struct Block *victim_blk = get_blk(&secure_deletion_table[i]);
+        struct nand_block *victim_blk = get_blk(ssd, &secure_deletion_table[i]);
         if (victim_blk == NULL){
             printf("1392 err\n");
             abort();
@@ -1679,7 +1700,7 @@ static void do_secure_deletion(struct ppa *secure_deletion_table, int index)
             // printf("1403 Blk(%d) vpc %d ipc %d epc %d vsubc %d\n", victim_blk->block_id, victim_blk->vpc, victim_blk->ipc, victim_blk->epc, victim_blk->victim_sublk_count);
             Remove_Block_Finder1(victim_blk->victim_sublk_count, victim_blk);
         }
-        int r = do_gc(victim_blk, TRUE);
+        do_gc(ssd, victim_blk, TRUE);
     }
 }
 
@@ -1706,7 +1727,7 @@ static void ssd_trim(struct ssd *ssd, NvmeRequest *req)
             //printf("start trim !!\n");
 
             struct ppa *ppa = get_maplba(ssd, lpn);
-            set_rmap(ppa, NO_SETTING);
+            set_rmap(ssd, ppa, NO_SETTING);
 
             // 找出Block 
             struct nand_block *blk = get_blk(ssd, ppa);
@@ -1736,10 +1757,10 @@ static void ssd_trim(struct ssd *ssd, NvmeRequest *req)
                     
                     secure_deletion_map[blk->block_id] = 1;
                     struct ppa blk_ppa;
-                    blk_ppa.ch = pg->addr.ch;
-                    blk_ppa.lun = pg->addr.lun;
-                    blk_ppa.pl = pg->addr.pl;
-                    blk_ppa.blk = pg->addr.blk;
+                    blk_ppa.g.ch = pg->addr.ch;
+                    blk_ppa.g.lun = pg->addr.lun;
+                    blk_ppa.g.pl = pg->addr.pl;
+                    blk_ppa.g.blk = pg->addr.blk;
                     secure_deletion_table[index] = blk_ppa;
                     index++;
                 }
@@ -1760,11 +1781,9 @@ static void ssd_trim(struct ssd *ssd, NvmeRequest *req)
 
     // 執行secure deletion
    if (need_do_secure_deletion == TRUE){
-        do_secure_deletion(secure_deletion_table, index);
+        do_secure_deletion(ssd, secure_deletion_table, index);
    }
    free(secure_deletion_table);
-
-   return 0;
 }
 
 // Over Provisioning 的操作
@@ -1992,7 +2011,7 @@ static void OP_get_pg_to_VictimBlk(struct ssd *ssd, struct nand_page *op_pg, str
     new_ppa.g.pg = pg->addr.pg;
 
     // 設定lba新的對應ppa
-    set_maplba(ssd, lba, new_ppa);
+    set_maplba(ssd, lba, &new_ppa);
     set_rmap(ssd, &new_ppa, lba);
     
     // 更新sublk
@@ -2127,7 +2146,7 @@ static int Enforce_Clean_Block(struct ssd *ssd, struct nand_block *victim_blk)
     if (need_check_finder == TRUE){
         int victim_sublk_cnt = 0;
         for (int i=0 ;i<sublks_per_blk; i++){
-            struct Sublock *sublk = &victim_blk->sublk[i];
+            struct nand_sublock *sublk = &victim_blk->sublk[i];
             if (sublk->state == Victim){
                 victim_sublk_cnt++;
             }
@@ -2275,7 +2294,7 @@ static uint64_t ssd_read(struct ssd *ssd, NvmeRequest *req)
         srd.type = USER_IO;
         srd.cmd = NAND_READ;
         srd.stime = req->stime;
-        sublat = ssd_advance_status(ssd, &ppa, &srd);
+        sublat = ssd_advance_status(ssd, ppa, &srd);
         maxlat = (sublat > maxlat) ? sublat : maxlat;
     }
     return maxlat;
@@ -2288,12 +2307,12 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     int len = req->nlb;
     uint64_t start_lpn = lba / spp->secs_per_pg;
     uint64_t end_lpn = (lba + len - 1) / spp->secs_per_pg;
-    struct ppa ppa;
     uint64_t lpn;
     uint64_t curlat = 0, maxlat = 0;
-    int r;
 
     // secure deletion會用到的變數
+   int secure_deletion_boundary_1 = 7500;
+   int secure_deletion_boundary_2 = 8500;
    int need_do_secure_deletion = FALSE;
    int *secure_deletion_map = (int *)malloc(Total_Block * sizeof(int));
    for (int block_id=0; block_id<Total_Block; block_id++){
@@ -2309,7 +2328,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 
     while (Enforce_do_gc() == TRUE){
         printf("2299\n");
-        int r2 = do_gc(NULL, FALSE);
+        int r2 = do_gc(ssd, NULL, FALSE);
         
         if (r2 == Stop_GC){
             //Print_SSD_State();
@@ -2398,13 +2417,18 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 
         // Sensitive、General LBA的存取
         struct ppa ppa;
-        if (boundary_1<=lba && lba<=boundary_2){
+        if (secure_deletion_boundary_1<=lba && lba<=secure_deletion_boundary_2){
             ppa = Get_Empty_PPA_For_Senitive_LBA(lba_HotLevel);
         }else{
             ppa = Get_Empty_PPA(lba_HotLevel);
         }
         set_maplba(ssd, lpn, &ppa);
-        set_rmap(ssd, lpn, &ppa);
+        set_rmap(ssd, &ppa, lpn);
+
+        struct nand_block *blk = get_blk(ssd, &ppa);
+        if (blk == NULL){
+            printf("2340 err\n");
+        }
 
         struct nand_page *pg = get_pg(ssd, &ppa);
         if (pg == NULL){
@@ -2414,7 +2438,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         Mark_Page_Valid(ssd, &ppa);
         // 設定page的屬性
         pg->LBA_HotLevel = lba_HotLevel;
-        if (boundary_1<=lba && lba<=boundary_2){
+        if (secure_deletion_boundary_1<=lba && lba<=secure_deletion_boundary_2){
             pg->type = Sensitive;
         }else{
             pg->type = General;
@@ -2438,7 +2462,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     }
     
     if (need_do_secure_deletion == TRUE){
-        do_secure_deletion(secure_deletion_table, index);
+        do_secure_deletion(ssd, secure_deletion_table, index);
     }
     free(secure_deletion_table);
 
@@ -2476,12 +2500,15 @@ static void *ftl_thread(void *arg)
             switch (req->cmd.opcode) {
             case NVME_CMD_WRITE:
                 lat = ssd_write(ssd, req);
+                if (should_do_gc() == TRUE){
+                    do_gc(ssd, NULL, FALSE);
+                }
                 break;
             case NVME_CMD_READ:
                 lat = ssd_read(ssd, req);
                 break;
             case NVME_CMD_DSM:
-                lat = ssd_trim(ssd, req);
+                ssd_trim(ssd, req);
                 break;
             default:
                 //ftl_err("FTL received unkown request type, ERROR\n");
@@ -2494,11 +2521,6 @@ static void *ftl_thread(void *arg)
             rc = femu_ring_enqueue(ssd->to_poller[i], (void *)&req, 1);
             if (rc != 1) {
                 ftl_err("FTL to_poller enqueue failed\n");
-            }
-
-            / clean one line if needed (in the background) 
-            if (should_gc(ssd)) {
-                do_gc(ssd, false);
             }
         }
     }

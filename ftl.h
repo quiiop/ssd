@@ -342,12 +342,6 @@ struct Finder2
 {
     struct ArrayList *Array;
 };
-
-const int boundary_1 = 7500;
-const int boundary_2 = 8500;
-
-//void Print_SSD_State(void);
-static int Enforce_Clean_Block(struct ssd *ssd, struct nand_block *victim_blk);
 /*------------------------------------------------------------*/
 
 void ssd_init(FemuCtrl *n);
