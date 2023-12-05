@@ -45,8 +45,49 @@ enum {
 };
 
 
+/*----------------------------自定義的----------------------------*/
+/*LinkedList的種類*/
+#define NonEmpty_id 0
+#define Empty_id 1
+
+/*Block.position的位置*/
+#define IN_NonEmpty 0
+#define IN_Empty 1
+
+/*Page.state的狀態*/
+#define INVALID -1
+#define VALID 1
+#define EMPTY 0
+
+/*用於maplba*/
+#define UNMAPPED 0
+#define MAPPED 1
+
+/*用於初始化*/
+#define NO_SETTING -1
+
+/*Page.type Page的類型*/
+#define General 0
+#define Sensitive 1
+
+/*Sublock.state*/
+#define Victim 0
+#define NonVictim 1
+
+/*GC的行為*/
+#define Stop_GC 0
+#define Finish_GC 1
+
+#define FTL_TRUE 1
+#define FTL_FALSE 0
+
+/*OP的參數*/
+#define OP_ID -1
+#define OP_SUCCESSFUL 1
+/*--------------------------------------------------------------*/
+
+#define SUBLK_BITS  (8)
 #define BLK_BITS    (8)
-#define SUBBLK_BITS (8) /* kuo */
 #define PG_BITS     (16)
 #define SEC_BITS    (8)
 #define PL_BITS     (8)
@@ -54,128 +95,80 @@ enum {
 #define CH_BITS     (7)
 
 /* describe a physical page addr */
-struct ppa { /* kuo */
+struct ppa {
     union {
         struct {
+            uint64_t sublk : SUBLK_BITS;
             uint64_t blk : BLK_BITS;
             uint64_t pg  : PG_BITS;
-            uint64_t subblk : SUBBLK_BITS;
             uint64_t sec : SEC_BITS;
             uint64_t pl  : PL_BITS;
             uint64_t lun : LUN_BITS;
             uint64_t ch  : CH_BITS;
             uint64_t rsv : 1;
         } g;
+
         uint64_t ppa;
     };
-};
-
-struct write_pointer_table {
-    bool use_wp_2;
-};
-
-struct trim_table {
-    int cnt;
+    int state;
 };
 
 typedef int nand_sec_status_t;
 
-/*Page的屬性*/
-#define PG_HOT 1 
-#define PG_COLD 0
-#define PG_Empty     0
-#define PG_General   1
-#define PG_Sensitive 2
-/*Hot Level分級*/
-#define Hot_level_0 0
-#define Hot_level_1 1
-#define Hot_level_2 2
-#define Hot_level_3 3
-#define Hot_level_4 4 
-#define Max_Level 4
-#define nHotLevel 16 //5
-/*Sublk的屬性*/
-#define SUBLK_VICTIM 0
-#define OLD_LPN 0
-#define NEW_LPN 1
-/*請求Empty Page的目的*/
-#define DO_CopyBack 0
-#define DO_Write 1
-#define Sensitive_Write 2
-#define General_Write 3
-#define Lived_Page_General 4
-#define Lived_Page_Sensitive 5
-#define No_CopyWrite 6
-/*自訂義*/
-#define False 0
-#define True 1
-
-
-struct nand_page {
-    nand_sec_status_t *sec;
-    int nsecs;
-    int status;
-    int attribute;  // 停用
-    int Hot_level; // 紀錄這筆Page lba的Hot Level   
-    int pg_type;  // 紀錄這筆Page存的是Genernal or Sensitive lba
-};
-
-
-#define SUBLK_FULL 0
-#define SUBLK_NOT_FULL 1
-#define SUBLK_VICTIM 0
-#define SUBLK_NOT_VICTIM 1
-#define SUBLK_NOT_IN_FINDER1 -1
-#define SUBLK_NOT_IN_FINDER2 -1
-
-struct nand_subblock { /* kuo */
-    struct nand_page *pg;
-    int npgs;
-    int ipc; /* invalid page */
-    int vpc; /* valid page*/
-    int epc; /* empty page */
-    int erase_cnt;
-    int wp; /* current write pointer */
-    int was_full; // sublk是否寫滿了
-    int was_victim; // sublk是否符合GC的條件
-    int Current_Hot_Level; // sublk現在Hot Level
-    uint64_t current_page_id;// 現在在使用哪個Page
-
+struct addr
+{
     uint64_t ch;
     uint64_t lun;
     uint64_t pl;
     uint64_t blk;
     uint64_t sublk;
+    uint64_t pg;
 };
 
-/*-1 表示沒有在Finder裡*/
-#define Blk_Not_In_Finder1 -1
-#define Blk_Not_in_Finder2 -1
-struct nand_block { /* kuo */
-    struct nand_subblock *subblk;
-    int nsubblks; // blk所擁有的sublk總數
-    uint64_t current_sublk_id; // blk現在使用哪個sublk
-    int GC_Sublk_Count; // blk現在有多少符合GC條件的sublk
-    int Free_Sublk_Count; // nsubblks - GC_Sublk_Count
-    
-    int In_Finder1_Position; // blk在Finder1的位置
-    int In_Finder2_Position; // blk在Finder2的位置
-    int invalid_sublk; //停用
-    int full_sublk; //停用
-    
-    uint64_t ch;
-    uint64_t lun;
-    uint64_t pl;
-    uint64_t blk;
+struct nand_page {
+    struct addr addr; 
+    nand_sec_status_t *sec;
+    int nsecs;
+    int id;
+    int state;
+    int LBA_HotLevel;
+    int type;
+};
+
+struct nand_sublock
+{
+    struct nand_page *pg;
+    int npgs;
+    int id;
+    int vpc;
+    int ipc;
+    int epc;
+    int state;
+    int have_invalid_sensitive_page;
+};
+
+struct nand_block {
+    struct nand_sublock *sublk;
+    int nsublks;
+    int id;
+    int block_id; 
+    int vpc; 
+    int ipc;
+    int epc;
+    int victim_sublk_count;
+    int Nonvictim_sublk_count;
+    int position;
 };
 
 struct nand_plane {
     struct nand_block *blk;
+    int id;
     int nblks;
 };
 
 struct nand_lun {
     struct nand_plane *pl;
+    int id;
     int npls;
     uint64_t next_lun_avail_time;
     bool busy;
@@ -184,20 +177,25 @@ struct nand_lun {
 
 struct ssd_channel {
     struct nand_lun *lun;
+    int id;
     int nluns;
     uint64_t next_ch_avail_time;
     bool busy;
     uint64_t gc_endtime;
 };
 
+struct Over_Provisioning
+{
+    struct nand_block *blk;
+    int size;
+};
+
 struct ssdparams {
     int secsz;        /* sector size in bytes */
     int secs_per_pg;  /* # of sectors per page */
-
-    int pgs_per_subblk; /* kuo */
-    int subblks_per_blk; /* kuo */
-    
-    int pgs_per_blk;  /* # of NAND pages per block */
+    int pgs_per_sublk;
+    int sublks_per_blk;  /* # of NAND pages per block */
+    int pgs_per_blk;
     int blks_per_pl;  /* # of blocks per plane */
     int pls_per_lun;  /* # of planes per LUN (Die) */
     int luns_per_ch;  /* # of LUNs per channel */
@@ -241,17 +239,9 @@ struct ssdparams {
     int tt_pls;       /* total # of planes in the SSD */
 
     int tt_luns;      /* total # of LUNs in the SSD */
-
-    
-    /* sublk gc */
-    int valid_page;
-    int invalid_page;
-
-    double sublk_gc_thres_percent;
-    int sublk_gc_thres_pgs;
-
 };
 
+/*----------------struct line 我們不會用到----------------*/
 typedef struct line {
     int id;  /* line id, the same as corresponding block id */
     int ipc; /* invalid page count in this line */
@@ -259,7 +249,6 @@ typedef struct line {
     QTAILQ_ENTRY(line) entry; /* in either {free,victim,full} list */
     /* position in the priority queue for victim lines */
     size_t                  pos;
-    bool was_line_in_victim_pq; // all page have valid or invalid one of them
 } line;
 
 /* wp: record next write addr */
@@ -268,7 +257,6 @@ struct write_pointer {
     int ch;
     int lun;
     int pg;
-    int subblk; /* kuo */
     int blk;
     int pl;
 };
@@ -285,6 +273,7 @@ struct line_mgmt {
     int victim_line_cnt;
     int full_line_cnt;
 };
+/*-----------------------------------------------------*/
 
 struct nand_cmd {
     int type;
@@ -292,63 +281,14 @@ struct nand_cmd {
     int64_t stime; /* Coperd: request arrival time */
 };
 
-struct node{
-    struct nand_block *blk;
-    struct node *next;
-};
-
-struct link
-{
-    int id;
-    struct node *head;
-    struct node *tail;
-};
-
-#define Finder1_ID 1
-struct Finder{
-    int id;
-    int size;
-    struct link *list;
-    void (*Show_Finder)(int);
-};
-
-#define Finder2_ID 2
-struct Finder2{
-    int id;
-    int size;
-    struct link *list;
-    void (*Show_Finder)(int);
-};
-
-#define Fail 0;
-#define Successful 1
-struct Queue{
-    int id;
-    int Queue_Size;
-    struct node *head;
-    struct node *tail;
-
-    /*
-    int (*Push)(struct nand_block*);
-    int (*Pop)();
-    int (*Size)();
-    struct nand_block* (*Peek)();
-    void (*Show)();
-    */ 
-};
-
-
 struct ssd {
     char *ssdname;
     struct ssdparams sp;
     struct ssd_channel *ch;
     struct ppa *maptbl; /* page level mapping table */
     uint64_t *rmap;     /* reverse mapptbl, assume it's stored in OOB */
-    struct write_pointer wp; // more or equal than average
-    struct write_pointer wp_2; // less than average
+    struct write_pointer wp;
     struct line_mgmt lm;
-    struct write_pointer_table *wp_table; // record the lpn which write pointer we used
-    struct trim_table *trim_table;
 
     /* lockless ring for communication with NVMe IO thread */
     struct rte_ring **to_ftl;
@@ -356,6 +296,59 @@ struct ssd {
     bool *dataplane_started_ptr;
     QemuThread ftl_thread;
 };
+
+/*---------------------Finder 1、2的struct---------------------*/
+struct Node
+{
+    struct nand_block *blk;
+    struct Node *next;
+};
+
+struct LinkedList_1 // For Finder1
+{
+    struct Node head;
+    int id;
+};
+
+struct ArrayList_1
+{
+    struct LinkedList_1 list;
+    int id;
+};
+
+struct Finder1
+{
+    struct ArrayList_1 *Array;
+};
+
+struct LinkedList
+{
+    struct Node head;
+    int size;
+    int list_id;
+    int vpc;
+    int ipc;
+    int epc;
+};
+
+struct ArrayList
+{
+    struct LinkedList Empty;
+    struct LinkedList NonEmpty;
+    int array_id;
+};
+
+struct Finder2
+{
+    struct ArrayList *Array;
+};
+
+const int boundary_1 = 7500;
+const int boundary_2 = 8500;
+
+//void Print_SSD_State(void);
+static int Enforce_Clean_Block(struct ssd *ssd, struct nand_block *victim_blk);
+/*------------------------------------------------------------*/
 
 void ssd_init(FemuCtrl *n);
 
