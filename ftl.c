@@ -648,6 +648,8 @@ static void gc_read_page(struct ssd *ssd, struct ppa *ppa)
 /* move valid page data (already in DRAM) from victim line to a new page */
 static uint64_t gc_write_page(struct ssd *ssd, struct ppa *old_ppa)
 {
+    printf("651 \n");
+    printf("GC write !!\n");
     struct ppa new_ppa;
     struct nand_lun *new_lun;
     uint64_t lpn = get_rmap_ent(ssd, old_ppa);
@@ -836,7 +838,7 @@ static uint64_t ssd_read(struct ssd *ssd, NvmeRequest *req)
 
 static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table, int sensitive_lpn_count, int temp_lpn_count)
 {
-    printf("do secure deletion \n");
+    // printf("do secure deletion \n");
     struct line_mgmt *lm = &ssd->lm;
     int index = 0;
     //printf("1536\n");
@@ -986,6 +988,61 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     return maxlat;
 }
 
+static uint64_t ssd_dsm(struct ssd *ssd, NvmeRequest *req)
+{
+    // printf("trim start\n");
+    struct ssdparams *spp = &ssd->sp;
+    uint64_t lba = req->slba;
+    int len = req->nlb;
+    uint64_t start_lpn = lba / spp->secs_per_pg;
+    uint64_t end_lpn = (lba + len - 1) / spp->secs_per_pg;
+    
+    if (end_lpn >= ssd->sp.tt_pgs){
+        return 0;
+    }
+
+    struct ppa ppa;
+    uint64_t lpn;
+    int is_need_secure_deletion = -1;
+    int sensitive_lpn_count = 0;
+    struct ppa *secure_deletion_table = (struct ppa *)malloc(sizeof(struct ppa) * (end_lpn-start_lpn+1));
+    
+    // printf("trim slba %lu, len %d\n", lba, len);
+    // printf("trim sLpn %lu , eLpn %lu, ttPg %d\n", start_lpn, end_lpn, ssd->sp.tt_pgs);
+    for (lpn = start_lpn; lpn <= end_lpn; lpn++) {
+        if (lpn >= ssd->sp.tt_pgs) {
+            // printf("table out of range!\n");
+            continue;                
+        }
+        ppa = get_maptbl_ent(ssd, lpn);
+        
+        if (mapped_ppa(&ppa)) {
+            struct nand_page *pg2 = get_pg(ssd, &ppa);
+            if (pg2 == NULL){
+                printf("pg2 Null !!\n");
+            }else{
+                if (pg2->status == PG_VALID){
+                    mark_page_invalid(ssd, &ppa);
+                    if (pg2->pg_type == PG_Sensitive){
+                        secure_deletion_table[sensitive_lpn_count] = ppa;
+                        sensitive_lpn_count++;
+                        is_need_secure_deletion = 1;
+                    }
+                }
+                set_rmap_ent(ssd, INVALID_LPN, &ppa);
+            }
+        }
+    }
+
+    if (is_need_secure_deletion == 1){
+        do_secure_deletion(ssd, secure_deletion_table, sensitive_lpn_count, (end_lpn-start_lpn+1));
+    }
+    
+    free(secure_deletion_table);
+    // printf("trim over\n");
+return 0;
+}
+
 static void *ftl_thread(void *arg)
 {
     FemuCtrl *n = (FemuCtrl *)arg;
@@ -1031,7 +1088,7 @@ static void *ftl_thread(void *arg)
                 lat = ssd_read(ssd, req);
                 break;
             case NVME_CMD_DSM:
-                lat = 0;
+                lat = ssd_dsm(ssd, req);
                 break;
             default:
                 //ftl_err("FTL received unkown request type, ERROR\n");
