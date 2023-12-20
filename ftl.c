@@ -2,6 +2,7 @@
 
 # include <stdlib.h>
 # include <stdio.h>
+#include <time.h>
 
 const char* fileName = "output.txt";
 const char* fileName2 = "output2.txt";
@@ -45,6 +46,14 @@ const char* fileName39 = "LBA_39.txt";
 const char* fileName40 = "debug_finder1.txt";
 const char* fileName41 = "debug_finder2.txt";
 
+const char* fileName42 = "READ_lat.txt";
+const char* fileName43 = "WRITE_lat.txt";
+const char* fileName44 = "ERASE_lat.txt";
+const char* fileName45 = "ssd_write_waste_time.txt";
+const char* fileName46 = "ssd_trim_waste_time.txt";
+const char* fileName47 = "ssd_write_lat.txt";
+const char* fileName48 = "ssd_read_lat.txt";
+
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
 FILE *outfile3 = NULL;
@@ -86,6 +95,15 @@ FILE *outfile38 = NULL;
 FILE *outfile39 = NULL;
 FILE *outfile40 = NULL;
 FILE *outfile41 = NULL;
+
+FILE *outfile42 = NULL;
+FILE *outfile43 = NULL;
+FILE *outfile44 = NULL;
+FILE *outfile45 = NULL;
+FILE *outfile46 = NULL;
+FILE *outfile47 = NULL;
+FILE *outfile48 = NULL;
+
 //#define FEMU_DEBUG_FTL
 
 //static bool wp_2 = false;
@@ -800,6 +818,7 @@ static uint64_t ssd_advance_status(struct ssd *ssd, struct ppa *ppa, struct
                      lun->next_lun_avail_time;
         lun->next_lun_avail_time = nand_stime + spp->pg_rd_lat;
         lat = lun->next_lun_avail_time - cmd_stime;
+        fprintf(outfile42, "%lu\n", lat);
 #if 0
         lun->next_lun_avail_time = nand_stime + spp->pg_rd_lat;
 
@@ -822,6 +841,7 @@ static uint64_t ssd_advance_status(struct ssd *ssd, struct ppa *ppa, struct
             lun->next_lun_avail_time = nand_stime + spp->pg_wr_lat;
         }
         lat = lun->next_lun_avail_time - cmd_stime;
+        fprintf(outfile43, "%lu\n", lat);
 
 #if 0
         chnl_stime = (ch->next_ch_avail_time < cmd_stime) ? cmd_stime : \
@@ -844,6 +864,7 @@ static uint64_t ssd_advance_status(struct ssd *ssd, struct ppa *ppa, struct
         lun->next_lun_avail_time = nand_stime + spp->blk_er_lat;
 
         lat = lun->next_lun_avail_time - cmd_stime;
+        fprintf(outfile44, "%lu\n", lat);
         break;
 
     default:
@@ -1588,6 +1609,12 @@ static int do_gc(struct ssd *ssd, bool force, NvmeRequest *req)
             //printf("1513\n");
             mark_subblock_free(ssd, &ppa);
         }
+
+        struct nand_cmd gce;
+        gce.type = GC_IO;
+        gce.cmd = NAND_ERASE;
+        gce.stime = 0;
+        ssd_advance_status(ssd, &ppa, &gce);
     }
     return 0;
 }
@@ -1711,6 +1738,11 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
                    //printf("1628\n");
                 }
             }
+            struct nand_cmd gce;
+            gce.type = GC_IO;
+            gce.cmd = NAND_ERASE;
+            gce.stime = 0;
+            ssd_advance_status(ssd, &sublk_ppa, &gce);
         }
     }
 
@@ -1720,7 +1752,14 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
 
 static uint64_t ssd_dsm(struct ssd *ssd, NvmeRequest *req)
 {
+    clock_t start_time, end_time, total_time;
+    total_time = 0;
+
+    start_time = clock();
     printf("trim start\n");
+    end_time = clock();
+    total_time = total_time + (end_time - start_time);
+    
     struct ssdparams *spp = &ssd->sp;
     uint64_t lba = req->slba;
     int len = req->nlb;
@@ -1772,19 +1811,27 @@ static uint64_t ssd_dsm(struct ssd *ssd, NvmeRequest *req)
     }
     
     free(secure_deletion_table);
+    start_time = clock();
     printf("trim over\n");
-return 0;
+    end_time = clock();
+    total_time = total_time + (end_time - start_time);
+
+    fprintf(outfile46, "%lu\n", total_time);
+    return 0;
 }
 
 static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 {
+    clock_t start_time, end_time;
+    clock_t total_time = 0;
+    
+    start_time = clock();
     printf("write start\n");
+    end_time = clock();
+    total_time = total_time + (end_time - start_time);
+
     int boundary_1 = 750000;
     int boundary_2 = 1250000;
-
-    clock_t start_t,finish_t;
-    double total_t = 0;
-    start_t = clock();
 
     uint64_t lba = req->slba;
     struct ssdparams *spp = &ssd->sp;
@@ -1832,7 +1879,10 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     //fprintf(outfile28, "%lu %d\n", lba, len);
     //fprintf(outfile27, "lba= %lu, size= %d\n", lba, len);
     fprintf(outfile30, "%lu\n", (end_lpn-start_lpn+1));
-    printf("1835\n");
+    start_time = clock();
+    printf("1865\n");
+    end_time = clock();
+    total_time = total_time + (end_time - start_time);
 
     if (boundary_1<=lba && lba<=boundary_2){
         check = 1;
@@ -1883,7 +1933,10 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         }else{
 			is_new_Lpn = NEW_LPN;
 		}
-       printf("1736\n");
+       start_time = clock();
+        printf("1919\n");
+        end_time = clock();
+        total_time = total_time + (end_time - start_time);
 
         /*1. 先申請一個Empty PPA*/
         int New_Hot_Level = original_hot_level+1;
@@ -1968,7 +2021,10 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         //Print_Finder(outfile32, 1);
         //Print_Finder(outfile32, 2);
         //fprintf(outfile32, "--------------------------------------\n");
-        printf("1872\n");
+        start_time = clock();
+        printf("2007\n");
+        end_time = clock();
+        total_time = total_time + (end_time - start_time);
         do_secure_deletion(ssd, secure_deletion_table, sensitive_lpn_count, (end_lpn-start_lpn+1));
         //printf("1874\n");
     }
@@ -1979,14 +2035,20 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     //Print_Finder(outfile27, 2);
 
     free(secure_deletion_table);
-    printf("1883\n");
+    start_time = clock();
+    printf("2021\n");
+    end_time = clock();
+    total_time = total_time + (end_time - start_time);
     clean_Temp_Block_Management();
     //printf("1885\n");
 
-    finish_t = clock();
-    total_t = (double)(finish_t - start_t);
-    fprintf(outfile38, "%f \n", total_t);
-    printf("write over\n");
+    //fprintf(outfile38, "%f \n", total_t);
+    start_time = clock();
+    printf("2029\n");
+    end_time = clock();
+    total_time = total_time + (end_time - start_time);
+
+    fprintf(outfile45, "%lu\n", total_time);
     return maxlat;
 }
 
@@ -2035,6 +2097,13 @@ static void *ftl_thread(void *arg)
     outfile37 = fopen(fileName37, "wb");
     outfile38 = fopen(fileName38, "wb");
     outfile39 = fopen(fileName39, "wb");
+    outfile42 = fopen(fileName42, "wb");
+    outfile43 = fopen(fileName43, "wb");
+    outfile44 = fopen(fileName44, "wb");
+    outfile45 = fopen(fileName45, "wb");
+    outfile46 = fopen(fileName46, "wb");
+    outfile47 = fopen(fileName47, "wb");
+    outfile48 = fopen(fileName48, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -2067,13 +2136,13 @@ static void *ftl_thread(void *arg)
             case NVME_CMD_WRITE:
                 lat = ssd_write(ssd, req);
                 request_trim = false;
-                //fprintf(outfile37, "%lu \n", lat);
+                fprintf(outfile47, "%lu\n", lat);
                 break;
             case NVME_CMD_READ:
                 //printf("1925\n");
                 lat = ssd_read(ssd, req);
-                //printf("1927\n");
                 request_trim = false;
+                fprintf(outfile48, "%lu\n", lat);
                 break;
             case NVME_CMD_DSM:
                 //Test3(ssd, outfile32);
@@ -2145,6 +2214,13 @@ static void *ftl_thread(void *arg)
     fclose(outfile37);
     fclose(outfile38);
     fclose(outfile39);
+    fclose(outfile42);
+    fclose(outfile43);
+    fclose(outfile44);
+    fclose(outfile45);
+    fclose(outfile46);
+    fclose(outfile47);
+    fclose(outfile48);
 
     return NULL;
 }
