@@ -9,6 +9,9 @@ const char* fileName34 = "GC_Blk_Record.txt";
 const char* fileName37 = "latency.txt";
 const char* fileName38 = "clock.txt";
 const char* fileName39 = "lba_record_39.txt";
+const char* fileName40 = "READ_lat.txt";
+const char* fileName41 = "WRITE_lat.txt";
+const char* fileName42 = "ERASE_lat.txt";
 
 FILE *outfile29 = NULL;
 FILE *outfile30 = NULL;
@@ -17,6 +20,9 @@ FILE *outfile34 = NULL;
 FILE *outfile37 = NULL;
 FILE *outfile38 = NULL;
 FILE *outfile39 = NULL;
+FILE *outfile40 = NULL;
+FILE *outfile41 = NULL;
+FILE *outfile42 = NULL;
 
 
 static void *ftl_thread(void *arg);
@@ -490,6 +496,7 @@ static uint64_t ssd_advance_status(struct ssd *ssd, struct ppa *ppa, struct
                      lun->next_lun_avail_time;
         lun->next_lun_avail_time = nand_stime + spp->pg_rd_lat;
         lat = lun->next_lun_avail_time - cmd_stime;
+        fprintf(outfile40, "%lu\n", lat);
 #if 0
         lun->next_lun_avail_time = nand_stime + spp->pg_rd_lat;
 
@@ -512,6 +519,7 @@ static uint64_t ssd_advance_status(struct ssd *ssd, struct ppa *ppa, struct
             lun->next_lun_avail_time = nand_stime + spp->pg_wr_lat;
         }
         lat = lun->next_lun_avail_time - cmd_stime;
+        fprintf(outfile41, "%lu\n", lat);
 
 #if 0
         chnl_stime = (ch->next_ch_avail_time < cmd_stime) ? cmd_stime : \
@@ -534,6 +542,7 @@ static uint64_t ssd_advance_status(struct ssd *ssd, struct ppa *ppa, struct
         lun->next_lun_avail_time = nand_stime + spp->blk_er_lat;
 
         lat = lun->next_lun_avail_time - cmd_stime;
+        fprintf(outfile42, "%lu\n", lat);
         break;
 
     default:
@@ -648,8 +657,8 @@ static void gc_read_page(struct ssd *ssd, struct ppa *ppa)
 /* move valid page data (already in DRAM) from victim line to a new page */
 static uint64_t gc_write_page(struct ssd *ssd, struct ppa *old_ppa)
 {
-    printf("651 \n");
-    printf("GC write !!\n");
+    //printf("651 \n");
+    //printf("GC write !!\n");
     struct ppa new_ppa;
     struct nand_lun *new_lun;
     uint64_t lpn = get_rmap_ent(ssd, old_ppa);
@@ -881,6 +890,12 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
             }else {
                 line->vpc = line->vpc - vpc;
             }
+
+            struct nand_cmd gce;
+            gce.type = GC_IO;
+            gce.cmd = NAND_ERASE;
+            gce.stime = 0;
+            ssd_advance_status(ssd, target_ppa, &gce);
         }
     }
 
@@ -1059,6 +1074,9 @@ static void *ftl_thread(void *arg)
     outfile37 = fopen(fileName37, "wb");
     outfile38 = fopen(fileName38, "wb");
     outfile39 = fopen(fileName39, "wb");
+    outfile40 = fopen(fileName40, "wb");
+    outfile41 = fopen(fileName41, "wb");
+    outfile42 = fopen(fileName42, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -1117,6 +1135,9 @@ static void *ftl_thread(void *arg)
     fclose(outfile37);
     fclose(outfile38);
     fclose(outfile39);
+    fclose(outfile40);
+    fclose(outfile41);
+    fclose(outfile42);
 
     return NULL;
 }
