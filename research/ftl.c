@@ -266,22 +266,35 @@ static void Add_Link(struct link *list, struct node *n)
 
 static int Remove_Node(struct link *list, struct nand_block *blk)
 {
+    printf("269\n");
     struct node *current;
     struct node *prevoius; 
 
     int is_find = 0;
+    printf("274\n");
+
     if(list->head == NULL){
         return is_find;
     }
+    printf("283\n");
+    
     prevoius = list->head;
+    printf("281\n");
+
     for(current=list->head; current!=NULL; current=current->next){
+        printf("285\n");
         if(current->blk == blk){
+            printf("287\n");
             is_find = 1;
             break;
         }else{
+            printf("291\n");
             prevoius = current;
         }
+        printf("294\n");
     }
+    printf("288\n");
+    
     if(is_find==1){
         if(current==list->head){
             list->head = list->head->next;
@@ -292,6 +305,7 @@ static int Remove_Node(struct link *list, struct nand_block *blk)
         }
         free(current);
     }
+    printf("296\n");
     return is_find;
 }
 
@@ -1016,6 +1030,8 @@ static double Calculate_GC_Sublk_2(struct nand_subblock *sublk)
 /* update SSD status about one page from PG_VALID -> PG_VALID */
 static void mark_page_invalid(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req)
 {
+    printf("mark invalid \n");
+
     // mark_page_invalid 只需要注意blk在Finder1的位置
     mark_page_invalid_count = mark_page_invalid_count + 1;
     struct ssdparams *spp = &ssd->sp;
@@ -1175,12 +1191,14 @@ static int Check_All_Sublk_IsEmpty(struct ssd *ssd, struct nand_block *blk)
 
 static void mark_subblock_free(struct ssd *ssd, struct ppa *ppa)
 {
+    printf("1180\n");
     struct ssdparams *spp = &ssd->sp;
     struct nand_subblock *sublk = get_subblk(ssd, ppa);
     //fprintf(outfile26, "1037 Mark Free sublk %p\n", sublk);
     //fprintf(outfile26, "1037 blk=%d, sublk=%d, pg=%d\n",  ppa->g.blk, ppa->g.subblk, ppa->g.pg);
     struct nand_page *pg = NULL;
 
+    printf("1187\n");
     for (int i = 0; i < spp->pgs_per_subblk; i++) {
         /* 重置 Page Status */
         pg = &sublk->pg[i];
@@ -1189,9 +1207,11 @@ static void mark_subblock_free(struct ssd *ssd, struct ppa *ppa)
         pg->pg_type = PG_Empty;
         Free_Page++;
     }
+    printf("1196\n");
     struct nand_block *blk = get_blk(ssd, ppa);
     int Sublk_Full_count = 0;
     int Victim_Sublk_Count = 0;
+    printf("1200\n");
     for (int i=0; i<spp->subblks_per_blk; i++){
         if ((&blk->subblk[i])->was_full == SUBLK_FULL){
             Sublk_Full_count++;
@@ -1216,26 +1236,35 @@ static void mark_subblock_free(struct ssd *ssd, struct ppa *ppa)
     blk->Free_Sublk_Count++;
     
     /*計算blk在Finder1的位置*/
+    printf("1225\n");
     if (Victim_Sublk_Count == 0){
         //struct node *n = init_node(blk);
         int Old_Position = blk->In_Finder1_Position;
-        Remove_Node(&finder->list[Old_Position], blk);
-        //free(n);
-        //fprintf(outfile26, "1094\n"); 
+        if (Old_Position >= 0){
+            int n = Remove_Node(&finder->list[Old_Position], blk);
+            if (n==0){
+                printf("1242 err blk not in finder1\n");
+            }
+        }
     }else{
          int New_Position = Victim_Sublk_Count -1;
+         printf("1235\n");
          Change_Blk_Position_InFinder1(blk, New_Position);
          //fprintf(outfile26, "1098 blk id %lu, Finder1 position= %d\n", blk->blk, blk->In_Finder1_Position); 
     }
     
     /* 如果blk所有的sublk都是empty sublk，那blk要從Finder2移除，加入到Free_Block_Management */
+    printf("1241\n");
     int n = Check_All_Sublk_IsEmpty(ssd, blk);
     if (n==1){ //blk要從Finder2移除，加入到Free_Block_Management
         if (blk->In_Finder2_Position != Blk_Not_in_Finder2){
+            printf("1245\n");
             Remove_Blk_InFinder2(blk, blk->In_Finder2_Position);
         }
+        printf("1248\n");
         Push(Free_Block_Management, blk);
     }
+    printf("1251\n");
 }
 
 static void gc_read_page(struct ssd *ssd, struct ppa *ppa)
@@ -1670,6 +1699,14 @@ static uint64_t ssd_read(struct ssd *ssd, NvmeRequest *req)
 
 static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table, int sensitive_lpn_count, int temp_lpn_count, NvmeRequest *req)
 {
+    clock_t start, end;
+    clock_t total_time = 0;
+    
+    start = clock();
+    printf("1676\n");
+    end = clock();
+    total_time = total_time + (end - start);
+    
     struct ssdparams *spp = &ssd->sp; 
     int index = 0;
     struct ppa *table = malloc(sizeof(struct ppa) * (temp_lpn_count));
@@ -1694,6 +1731,11 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
         }
     }
     
+    start = clock();
+    printf("1705\n");
+    end = clock();
+    total_time = total_time + (end - start);
+
     for (int i=0; i<index; i++){
         struct nand_block *blk = get_blk(ssd, &table[i]);
 
@@ -1713,25 +1755,43 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
             sublk_ppa.g.pl = blk->pl;
             sublk_ppa.g.blk = blk->blk;
         
+            start = clock();
+            printf("1729\n");
+            end = clock();
+            total_time = total_time + (end - start);
+
             if (count == spp->subblks_per_blk){
+                printf("1737\n");
                 for (int k=0; k<spp->subblks_per_blk; k++){
+                    printf("1740\n");
                     sublk_ppa.g.subblk = k;
                     clean_one_subblock(ssd, &sublk_ppa, NULL);
                 }
                 for (int k=0; k<spp->subblks_per_blk; k++){
+                    printf("1744\n");
                     sublk_ppa.g.subblk = k;
                     mark_subblock_free(ssd, &sublk_ppa);
                 }
+                printf("1748\n");
             }else{
+                printf("1749\n");
                 for (int k=0; k<=last_index; k++){
+                    printf("1750\n");
                     sublk_ppa.g.subblk = k;
                     clean_one_subblock(ssd, &sublk_ppa, NULL);
                 }
                 for (int k=0; k<=last_index; k++){
+                    printf("1755\n");
                     sublk_ppa.g.subblk = k;
                     mark_subblock_free(ssd, &sublk_ppa);
                 }
+                printf("1761\n");
             }
+
+            start = clock();
+            printf("1757\n");
+            end = clock();
+            total_time = total_time + (end - start);
 
             struct nand_cmd gce;
             gce.type = GC_IO;
@@ -1739,6 +1799,11 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
             gce.stime = 0;
             ssd_advance_status(ssd, &sublk_ppa, &gce);
 
+            start = clock();
+            printf("1768\n");
+            end = clock();
+            total_time = total_time + (end - start);
+            
             if (count == spp->subblks_per_blk || last_index == spp->subblks_per_blk-1){
                 fprintf(outfile50, "1\n");
             }else{
@@ -1746,6 +1811,11 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
             }
         }
     }
+
+    start = clock();
+    printf("1768\n");
+    end = clock();
+    total_time = total_time + (end - start);
 
     free(table);
     return 0;
@@ -1764,12 +1834,31 @@ static uint64_t ssd_dsm(struct ssd *ssd, NvmeRequest *req)
     struct ssdparams *spp = &ssd->sp;
     uint64_t lba = req->slba;
     int len = req->nlb;
-    uint64_t start_lpn = lba / spp->secs_per_pg;
-    uint64_t end_lpn = (lba + len - 1) / spp->secs_per_pg;
     
+    uint64_t start_lpn = lba / spp->secs_per_pg;
+    start = clock();
+    printf("s %lu\n", start_lpn);
+    end = clock();
+    total_time = total_time + (end - start);
+    
+    uint64_t end_lpn = (lba + len - 1) / spp->secs_per_pg;
+    start = clock();
+    printf("e %lu\n", end_lpn);
+    end = clock();
+    total_time = total_time + (end - start);
+
     if (end_lpn >= ssd->sp.tt_pgs){
+        start = clock();
+        printf("1782\n");
+        end = clock();
+        total_time = total_time + (end - start);
         return 0;
     }
+
+    start = clock();
+    printf("1789\n");
+    end = clock();
+    total_time = total_time + (end - start);
 
     struct ppa ppa;
     uint64_t lpn;
@@ -1780,6 +1869,10 @@ static uint64_t ssd_dsm(struct ssd *ssd, NvmeRequest *req)
     // printf("trim slba %lu, len %d\n", lba, len);
     // printf("trim sLpn %lu , eLpn %lu, ttPg %d\n", start_lpn, end_lpn, ssd->sp.tt_pgs);
     for (lpn = start_lpn; lpn <= end_lpn; lpn++) {
+        start = clock();
+        printf("1803\n");
+        end = clock();
+        total_time = total_time + (end - start);
         if (lpn >= ssd->sp.tt_pgs) {
             // printf("table out of range!\n");
             continue;                
@@ -1795,7 +1888,19 @@ static uint64_t ssd_dsm(struct ssd *ssd, NvmeRequest *req)
                 printf("pg2 Null !!\n");
             }else{
                 if (pg2->status == PG_VALID){
+                    
+                    start = clock();
+                    printf("1822\n");
+                    end = clock();
+                    total_time = total_time + (end - start);
+                    
                     mark_page_invalid(ssd, &ppa, req);
+
+                    start = clock();
+                    printf("1830\n");
+                    end = clock();
+                    total_time = total_time + (end - start);
+                    
                     if (pg2->pg_type == PG_Sensitive){
                         secure_deletion_table[sensitive_lpn_count] = ppa;
                         sensitive_lpn_count++;
@@ -1807,10 +1912,21 @@ static uint64_t ssd_dsm(struct ssd *ssd, NvmeRequest *req)
         }
     }
 
+    start = clock();
+    printf("1848\n");
+    end = clock();
+    total_time = total_time + (end - start);
+
     if (is_need_secure_deletion == 1){
+        // 問題是這裡 ？
         do_secure_deletion(ssd, secure_deletion_table, sensitive_lpn_count, (end_lpn-start_lpn+1), req);
     }
     
+    start = clock();
+    printf("1858\n");
+    end = clock();
+    total_time = total_time + (end - start);
+
     free(secure_deletion_table);
     
     start = clock();
@@ -2098,6 +2214,8 @@ static void *ftl_thread(void *arg)
     outfile37 = fopen(fileName37, "wb");
     outfile38 = fopen(fileName38, "wb");
     outfile39 = fopen(fileName39, "wb");
+    outfile40 = fopen(fileName40, "wb"); //debug finder1
+    outfile41 = fopen(fileName41, "wb"); //debug finder2 
 
     outfile42 = fopen(fileName42, "wb");
     outfile43 = fopen(fileName43, "wb");
@@ -2218,6 +2336,8 @@ static void *ftl_thread(void *arg)
     fclose(outfile37);
     fclose(outfile38);
     fclose(outfile39);
+    fclose(outfile40);
+    fclose(outfile41);
 
     fclose(outfile42);
     fclose(outfile43);
