@@ -283,13 +283,17 @@ static int Remove_Node(struct link *list, struct nand_block *blk)
 
     for(current=list->head; current!=NULL; current=current->next){
         printf("285\n");
-        if(current->blk == blk){
+        if (current != NULL){
             printf("287\n");
-            is_find = 1;
-            break;
-        }else{
-            printf("291\n");
-            prevoius = current;
+            printf("%p\n", &current->blk);
+            if(current->blk == blk){
+                printf("287\n");
+                is_find = 1;
+                break;
+            }else{
+                printf("291\n");
+                prevoius = current;
+            }
         }
         printf("294\n");
     }
@@ -314,10 +318,15 @@ static int Add_Finder1(struct nand_block *blk, int Old_Position, int New_Positio
     struct node *n = init_node(blk);
 
     if(Old_Position==-1 && New_Position==0){
+        printf("321\n");
         Add_Link(&finder->list[New_Position], n);
     }else{
-        Remove_Node(&finder->list[Old_Position], blk);
-        Add_Link(&finder->list[New_Position], n);
+        if (Old_Position >=0){
+            printf("325\n");
+            Remove_Node(&finder->list[Old_Position], blk);
+            printf("327\n");
+            Add_Link(&finder->list[New_Position], n);
+        }
     }
     return 1;
 }
@@ -328,10 +337,15 @@ static int Add_Finder2(struct nand_block *blk, int Old_Hot_Level, int New_Hot_Le
     /* Old_Hot_Level等於-1，表示Block新加入Finder2新加入Finder2 */
     //fprintf(outfile27, "258 Old Hot Level %d, New Hot Level %d\n", Old_Hot_Level, New_Hot_Level);
     if(Old_Hot_Level == Blk_Not_in_Finder2){
+        printf("340\n");
         Add_Link(&finder2->list[New_Hot_Level], n);
     }else{
-        Remove_Node(&finder2->list[Old_Hot_Level], blk);
-        Add_Link(&finder2->list[New_Hot_Level], n);
+        if (Old_Hot_Level >= 0){
+            printf("344\n");
+            Remove_Node(&finder2->list[Old_Hot_Level], blk);
+            printf("346\n");
+            Add_Link(&finder2->list[New_Hot_Level], n);
+        }
     }
     return 1;
 }
@@ -1616,6 +1630,7 @@ static int do_gc(struct ssd *ssd, bool force, NvmeRequest *req)
     //int GC_Sublk_Count = 0;
 
     //printf("do gc\n");
+    printf("1633\n");
     victim_blk = Get_Victim_Block(ssd);
     if (victim_blk == NULL){
         //printf("No Victim Blk\n");
@@ -1630,15 +1645,29 @@ static int do_gc(struct ssd *ssd, bool force, NvmeRequest *req)
     ppa.g.pl = victim_blk->pl;
     ppa.g.blk = victim_blk->blk;
 
-    /* copy back valid data */
+    int last_index = 0;
     for (sublk=0; sublk<spp->subblks_per_blk; sublk++){
         ppa.g.subblk = sublk;
         victim_sublk = get_subblk(ssd, &ppa);
+        if (victim_sublk->was_victim == SUBLK_VICTIM){
+            last_index = sublk;
+        }
+    }
+
+    /* copy back valid data */
+    for (sublk=0; sublk<last_index; sublk++){
+        ppa.g.subblk = sublk;
+        printf("1651\n");
+        victim_sublk = get_subblk(ssd, &ppa);
+        printf("1653\n");
 
         if (victim_sublk->was_victim == SUBLK_VICTIM){
+            printf("1655\n");
             clean_one_subblock(ssd, &ppa, req);
-            //printf("1513\n");
+            
+            printf("1658\n");
             mark_subblock_free(ssd, &ppa);
+            printf("1648\n");
         }
     }
     return 0;
@@ -1771,6 +1800,7 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
                     printf("1744\n");
                     sublk_ppa.g.subblk = k;
                     mark_subblock_free(ssd, &sublk_ppa);
+                    printf("1781\n");
                 }
                 printf("1748\n");
             }else{
@@ -1784,6 +1814,7 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
                     printf("1755\n");
                     sublk_ppa.g.subblk = k;
                     mark_subblock_free(ssd, &sublk_ppa);
+                    printf("1795\n");
                 }
                 printf("1761\n");
             }
@@ -1948,15 +1979,15 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     end = clock();
     total_time = total_time + (end - start);
 
-    int boundary_1 = 750000;
-    int boundary_2 = 1250000;
+    int boundary_1 = 0; // 750000
+    int boundary_2 = 2000000; // 1250000
 
     uint64_t lba = req->slba;
     struct ssdparams *spp = &ssd->sp;
     int len = req->nlb;
     //fprintf(outfile39, "%lu\n", lba);
 
-    //printf("1621\n");
+    printf("1968\n");
     uint64_t start_lpn = lba / spp->secs_per_pg;
     uint64_t end_lpn = (lba + len - 1) / spp->secs_per_pg;
     //fprintf(outfile32, "start= %lu, end= %lu\n", start_lpn, end_lpn);
@@ -1965,7 +1996,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     uint64_t curlat = 0, maxlat = 0;
 	int is_need_secure_deletion = -1; // new
 	struct ppa *secure_deletion_table = malloc(sizeof(struct ppa) * (end_lpn-start_lpn+1)); //用來記錄哪些lpn是需要secure deletion的
-    // printf("1629\n");
+    printf("1977\n");
     int sensitive_lpn_count = 0;
     int check =-1; // 拿來確認Lba是不是sensitive lba
 
@@ -1979,7 +2010,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     // printf("ssd ipc %d , gc ipc %d\n", tt_ipc, spp->sublk_gc_thres_pgs);
     while (should_gc_sublk(ssd)) {
         /* perform GC here until !should_gc(ssd) */
-        // printf("1643\n");
+        printf("1991\n");
         int r = do_gc(ssd, true, req);
         // printf("1645\n");
         //fprintf(outfile8,"gc r= %d\n", r);
@@ -2165,7 +2196,9 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     end = clock();
     total_time = total_time + (end - start);
 
+    printf("2185\n");
     fprintf(outfile47, "%lu\n", total_time);
+    printf("2187\n");
     return maxlat;
 }
 
@@ -2242,11 +2275,15 @@ static void *ftl_thread(void *arg)
 
     while (1) {
         for (i = 1; i <= n->num_poller; i++) {
+            printf("2264\n");
             if (!ssd->to_ftl[i] || !femu_ring_count(ssd->to_ftl[i]))
                 continue;
+            printf("2267\n");
 
             rc = femu_ring_dequeue(ssd->to_ftl[i], (void *)&req, 1);
+            printf("2270\n");
             fprintf(outfile10, "before rc = %d\n", rc);
+            
             if (rc != 1) {
                 printf("1333 error\n");
                 printf("FEMU: FTL to_ftl dequeue failed\n");
@@ -2254,22 +2291,27 @@ static void *ftl_thread(void *arg)
 
             ftl_assert(req);
             
+            printf("2276\n");
             switch (req->cmd.opcode) {
             case NVME_CMD_WRITE:
+                printf("2278\n");
                 lat = ssd_write(ssd, req);
                 request_trim = false;
+                printf("2280\n");
                 fprintf(outfile46, "%lu\n", lat);
                 break;
             case NVME_CMD_READ:
                 //printf("1925\n");
+                printf("2286\n");
                 lat = ssd_read(ssd, req);
+                printf("2288\n");
                 fprintf(outfile45, "%lu\n", lat);
                 request_trim = false;
                 break;
             case NVME_CMD_DSM:
-                //Test3(ssd, outfile32);
+                printf("2291\n");
                 lat = ssd_dsm(ssd, req);
-                // lat = 0;
+                printf("2293\n");
                 request_trim = true;
                 break;
             default:
@@ -2277,26 +2319,32 @@ static void *ftl_thread(void *arg)
                 //ftl_err("FTL received unkown request type, ERROR\n");
                 ;
             }
+            printf("2303\n");
 	    //printf("i = %d\n",i);
             //printf("1944\n");
             req->reqlat = lat;
             req->expire_time += lat;
+            printf("2309\n");
             rc = femu_ring_enqueue(ssd->to_poller[i], (void *)&req, 1);
             //fprintf(outfile10, "after rc = %d\n", rc);
             if (rc != 1) {
                 printf("1364 error\n");
                 ftl_err("FTL to_poller enqueue failed\n");
             }
-
+            printf("2316\n");
             /* clean one line if needed (in the background) */
             if(!request_trim) {
             	//printf("1956\n");
+                printf("2320\n");
                 if (should_gc_sublk(ssd)) {
             		//fprintf(outfile7,"%"PRIu64" %d %d\n",req->slba, req->cmd.opcode, ssd->lm.free_line_cnt);
-                	do_gc(ssd, false, req); // default false
-            	}
+                	printf("2323\n");
+                    do_gc(ssd, false, req); // default false
+            	    printf("2325\n");
+                }
                 //printf("1961\n");
             }
+            printf("2329\n");
             //printf("1963\n");    
         }
     }
