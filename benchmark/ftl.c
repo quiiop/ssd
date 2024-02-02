@@ -14,6 +14,7 @@ const char* fileName41 = "WRITE_lat.txt";
 const char* fileName42 = "ERASE_lat.txt";
 const char* fileName47 = "ssd_write_lat.txt";
 const char* fileName48 = "ssd_read_lat.txt";
+const char* fileName51 = "write_node.txt";
 
 FILE *outfile29 = NULL;
 FILE *outfile30 = NULL;
@@ -27,10 +28,10 @@ FILE *outfile41 = NULL;
 FILE *outfile42 = NULL;
 FILE *outfile47 = NULL;
 FILE *outfile48 = NULL;
-
+FILE *outfile51 = NULL;
 
 static void *ftl_thread(void *arg);
-static int write_request = 0;
+
 
 static inline bool should_gc(struct ssd *ssd)
 {
@@ -916,6 +917,8 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 
     uint64_t lba = req->slba;
     fprintf(outfile39, "%lu\n", lba);
+    fprintf(outfile51, "%lu\n", lba);
+
     struct ssdparams *spp = &ssd->sp;
     int len = req->nlb;
     uint64_t start_lpn = lba / spp->secs_per_pg;
@@ -942,11 +945,14 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     }
 
     fprintf(outfile30, "%lu\n", (end_lpn-start_lpn+1));
-    if (write_request == 10){
+    
+    int boundary_1 = 750000; // 750000
+    int boundary_2 = 1250000;
+
+    if (boundary_1<=lba && lba<=boundary_2){
         check = 1;
-        write_request = 0;
     }else{
-        write_request++;
+        check = 0;
     }
 
     // printf("write req cnt %d\n", write_request);
@@ -1083,6 +1089,7 @@ static void *ftl_thread(void *arg)
     outfile42 = fopen(fileName42, "wb");
     outfile47 = fopen(fileName47, "wb");
     outfile48 = fopen(fileName48, "wb");
+    outfile51 = fopen(fileName51, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -1147,6 +1154,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile42);
     fclose(outfile47);
     fclose(outfile48);
+    fclose(outfile51);
 
     return NULL;
 }
