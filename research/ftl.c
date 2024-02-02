@@ -56,6 +56,9 @@ const char* fileName48 = "ssd_trim_waste_time.txt";
 const char* fileName49 = "gc_sublk_cnt.txt";
 const char* fileName50 = "gc_blk_cnt.txt";
 
+const char* fileName51 = "write_node.txt";
+const char* fileName52 = "trim_node.txt";
+
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
 FILE *outfile3 = NULL;
@@ -107,6 +110,9 @@ FILE *outfile47 = NULL;
 FILE *outfile48 = NULL;
 FILE *outfile49 = NULL;
 FILE *outfile50 = NULL;
+
+FILE *outfile51 = NULL;
+FILE *outfile52 = NULL;
 //#define FEMU_DEBUG_FTL
 
 //static bool wp_2 = false;
@@ -859,6 +865,7 @@ static uint64_t ssd_advance_status(struct ssd *ssd, struct ppa *ppa, struct
         ch->next_ch_avail_time = chnl_stime + spp->ch_xfer_lat;
 
         lat = ch->next_ch_avail_time - cmd_stime;
+        fprintf(outfile42, "%lu\n", lat);
 #endif
         break;
 
@@ -884,6 +891,7 @@ static uint64_t ssd_advance_status(struct ssd *ssd, struct ppa *ppa, struct
         lun->next_lun_avail_time = nand_stime + spp->pg_wr_lat;
 
         lat = lun->next_lun_avail_time - cmd_stime;
+        fprintf(outfile43, "%lu\n", lat);
 #endif
         break;
 
@@ -1864,6 +1872,7 @@ static uint64_t ssd_dsm(struct ssd *ssd, NvmeRequest *req)
 
     struct ssdparams *spp = &ssd->sp;
     uint64_t lba = req->slba;
+    fprintf(outfile52, "%lu\n", lba);
     int len = req->nlb;
     
     uint64_t start_lpn = lba / spp->secs_per_pg;
@@ -1979,10 +1988,11 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     end = clock();
     total_time = total_time + (end - start);
 
-    int boundary_1 = 0; // 750000
-    int boundary_2 = 2000000; // 1250000
+    int boundary_1 = 750000; // 750000
+    int boundary_2 = 1250000; // 1250000
 
     uint64_t lba = req->slba;
+    fprintf(outfile51, "%lu\n", lba);
     struct ssdparams *spp = &ssd->sp;
     int len = req->nlb;
     //fprintf(outfile39, "%lu\n", lba);
@@ -2260,6 +2270,9 @@ static void *ftl_thread(void *arg)
     outfile49 = fopen(fileName49, "wb");
     outfile50 = fopen(fileName50, "wb");
 
+    outfile51 = fopen(fileName51, "wb");
+    outfile52 = fopen(fileName52, "wb");
+
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
     }
@@ -2396,6 +2409,9 @@ static void *ftl_thread(void *arg)
     fclose(outfile48);
     fclose(outfile49);
     fclose(outfile50);
+
+    fclose(outfile51);
+    fclose(outfile52);
 
     return NULL;
 }
