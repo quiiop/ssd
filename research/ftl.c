@@ -142,6 +142,9 @@ static uint64_t Free_Page = 0;
 static uint64_t Valid_Page = 0;
 static uint64_t Invalid_Page = 0;
 uint64_t current_block_cnt = 0;
+
+// 全局控制的
+static uint64_t MAX_Frequency = 0;
 // static uint64_t Write_Lpn_Cnt = 0;
 
 static inline bool should_gc_sublk(struct ssd *ssd)
@@ -529,6 +532,7 @@ static void ssd_init_nand_page(struct nand_page *pg, struct ssdparams *spp)
     for (int i = 0; i < pg->nsecs; i++) {
         pg->sec[i] = SEC_FREE;
     }
+    pg->LPN_frequency = 0;
     pg->status = PG_FREE;
     pg->Hot_level = Hot_level_0;
     pg->pg_type = PG_Empty;
@@ -1225,6 +1229,7 @@ static void mark_subblock_free(struct ssd *ssd, struct ppa *ppa)
         /* 重置 Page Status */
         pg = &sublk->pg[i];
         pg->status = PG_FREE;
+        pg->LPN_frequency = 0;
         pg->Hot_level = Hot_level_0;
         pg->pg_type = PG_Empty;
         Free_Page++;
@@ -1302,7 +1307,7 @@ static void gc_read_page(struct ssd *ssd, struct ppa *ppa)
 }
 
 /* move valid page data (already in DRAM) from victim line to a new page */
-static uint64_t gc_write_page(struct ssd *ssd, struct ppa *old_ppa, struct ppa *empty_ppa, int Hot_Level)
+static uint64_t gc_write_page(struct ssd *ssd, struct ppa *old_ppa, struct ppa *empty_ppa, int Hot_Level, int LPN_frequency)
 {
     //printf("1182\n");
     struct ppa new_ppa;
@@ -1320,6 +1325,7 @@ static uint64_t gc_write_page(struct ssd *ssd, struct ppa *old_ppa, struct ppa *
     //printf("1195\n");
 
     struct nand_page *new_pg = get_pg(ssd, empty_ppa);
+    new_pg->LPN_frequency = LPN_frequency;
     new_pg->Hot_level = Hot_Level;
     //printf("1199\n");
     mark_page_valid(ssd, empty_ppa);
@@ -1614,7 +1620,7 @@ static int clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
                 //printf("1465\n");
             }
             //printf("1469\n");
-            gc_write_page(ssd, ppa, empty_ppa, pg_iter->Hot_level);
+            gc_write_page(ssd, ppa, empty_ppa, pg_iter->Hot_level, pg_iter->LPN_frequency);
             //printf("1471\n");
             cnt++;
         }else{
@@ -2058,6 +2064,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         // fprintf(outfile26, "LBA %lu\n", lba);
         int original_hot_level = -1; //lba原本的Hot Level
 		int is_new_Lpn = -1; //lba是不是新寫入的
+        int old_lpn_frequency = 0;
 
         //printf("1759\n");
         ppa = get_maptbl_ent(ssd, lpn);
@@ -2067,6 +2074,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
             //printf("1681\n");
             /* update old page information first */
             struct nand_page *pg = get_pg(ssd, &ppa);
+            old_lpn_frequency = pg->LPN_frequency;
             // printf("1684\n");
             if (pg->status == PG_VALID){
                 //printf("1686\n");
@@ -2148,14 +2156,52 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         /*3. 更新Lba的Hot level*/
 		if(is_new_Lpn == NEW_LPN){ // new lpn
             //fprintf(outfile27, "New lpn %lu\n", lpn);
-			new_pg->Hot_level = Hot_level_0;
+			new_pg->LPN_frequency = 1;
+            new_pg->Hot_level = Hot_level_0;
 		}else{
             //fprintf(outfile27, "Old lpn %lu\n", lpn);
-			if (New_Hot_Level <= Max_Level){
-                new_pg->Hot_level = New_Hot_Level;
+            new_pg->LPN_frequency = old_lpn_frequency+1;
+
+            if (new_pg->LPN_frequency > MAX_Frequency){
+                MAX_Frequency = new_pg->LPN_frequency;
+            }
+
+            int pg_freq = new_pg->LPN_frequency;
+            double low_boundary_1 = MAX_Frequency * ((Level_count -1) / Level_count);
+            double low_boundary_2 = MAX_Frequency * ((Level_count -2) / Level_count);
+            double low_boundary_3 = MAX_Frequency * ((Level_count -3) / Level_count);
+            double low_boundary_4 = MAX_Frequency * ((Level_count -4) / Level_count);
+            double low_boundary_5 = 0;
+
+            /*if (low_boundary_1<new_pg->LPN_frequency && new_pg->LPN_frequency <= MAX_Frequency){
+                new_pg->Hot_level = Max_Level; // Hot_level_4
+            }else if (low_boundary_2<new_pg->LPN_frequency && new_pg->LPN_frequency <= low_boundary_1)
+            {
+                new_pg->Hot_level = Hot_level_3;
+            }else if (low_boundary_3<new_pg->LPN_frequency && new_pg->LPN_frequency <= low_boundary_2)
+            {
+                new_pg->Hot_level = Hot_level_2;
+            }else if (low_boundary_4<new_pg->LPN_frequency && new_pg->LPN_frequency <= low_boundary_3)
+            {
+                new_pg->Hot_level = Hot_level_1;
             }else{
-                new_pg->Hot_level = Max_Level;
-            }		
+                new_pg->Hot_level = Hot_level_0;
+            }*/
+            if (low_boundary_5<=pg_freq && pg_freq<low_boundary_4){
+                new_pg->Hot_level = Hot_level_0;
+            }else if(low_boundary_4<=pg_freq && pg_freq<low_boundary_3){
+                new_pg->Hot_level = Hot_level_1;
+            }else if(low_boundary_3<=pg_freq && pg_freq<low_boundary_2){
+                new_pg->Hot_level = Hot_level_2;
+            }else if(low_boundary_2<=pg_freq && pg_freq<low_boundary_1){
+                new_pg->Hot_level = Hot_level_3;
+            }else if(low_boundary_1<=pg_freq && pg_freq<MAX_Frequency){
+                new_pg->Hot_level = Max_Level; // Hot_level_4
+            }else{
+                printf("2201 err\n");
+                new_pg->Hot_level = Hot_level_0; // 要改成abort()
+                //abort();
+            }
 		}
 
         /*4. mark page valid*/

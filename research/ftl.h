@@ -93,7 +93,8 @@ typedef int nand_sec_status_t;
 #define Hot_level_3 3
 #define Hot_level_4 4 
 #define Max_Level 4
-#define nHotLevel 16 //5
+#define Level_count 5 // Max_Level +1
+#define nHotLevel 16 // nHotLevel是最多可以分成多少Hot level , 但是具體會用到多少Hot level由Level_count決定
 /*Sublk的屬性*/
 #define SUBLK_VICTIM 0
 #define OLD_LPN 0
@@ -115,6 +116,7 @@ struct nand_page {
     nand_sec_status_t *sec;
     int nsecs;
     int status;
+    int LPN_frequency; // 紀錄LPN的頻率
     int attribute;  // 停用
     int Hot_level; // 紀錄這筆Page lba的Hot Level   
     int pg_type;  // 紀錄這筆Page存的是Genernal or Sensitive lba
