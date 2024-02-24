@@ -2062,7 +2062,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 
     for (lpn = start_lpn; lpn <= end_lpn; lpn++){
         // fprintf(outfile26, "LBA %lu\n", lba);
-        int original_hot_level = -1; //lba原本的Hot Level
+        // int original_hot_level = -1; //lba原本的Hot Level
 		int is_new_Lpn = -1; //lba是不是新寫入的
         int old_lpn_frequency = 0;
 
@@ -2084,7 +2084,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
             //printf("1773\n");
             set_rmap_ent(ssd, INVALID_LPN, &ppa);
 			// printf("1692\n");
-            original_hot_level = pg->Hot_level; // 紀錄原本Lpn的hot level
+            // original_hot_level = pg->Hot_level; // 紀錄原本Lpn的hot level
 		    //printf("1777\n");
             is_new_Lpn = OLD_LPN; // lpn不是第一次寫入
 			if (pg->pg_type == PG_Sensitive){ // 此page是sensitive
@@ -2102,13 +2102,48 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 			is_new_Lpn = NEW_LPN;
 		}
        
-       start = clock();
+        start = clock();
         printf("1915\n");
         end = clock();
         total_time = total_time + (end - start);
 
+        // 根據頻率計算Hot Level
+        int new_freq = -1;
+        int New_Hot_Level = -1;
+
+        if (is_new_Lpn == OLD_LPN){
+            new_freq = old_lpn_frequency +1;
+        }else{
+            new_freq = 1;
+        }
+        
+        if (new_freq > MAX_Frequency){
+            MAX_Frequency = new_freq;
+        }
+        
+        int pg_freq = new_freq;
+        double low_boundary_1 = MAX_Frequency * ((Level_count -1) / Level_count);
+        double low_boundary_2 = MAX_Frequency * ((Level_count -2) / Level_count);
+        double low_boundary_3 = MAX_Frequency * ((Level_count -3) / Level_count);
+        double low_boundary_4 = MAX_Frequency * ((Level_count -4) / Level_count);
+        double low_boundary_5 = 0;
+
+        if(low_boundary_5<=pg_freq && pg_freq<low_boundary_4){
+            New_Hot_Level = Hot_level_0;
+        }else if(low_boundary_4<=pg_freq && pg_freq<low_boundary_3){
+            New_Hot_Level = Hot_level_1;
+        }else if(low_boundary_3<=pg_freq && pg_freq<low_boundary_2){
+            New_Hot_Level = Hot_level_2;
+        }else if(low_boundary_2<=pg_freq && pg_freq<low_boundary_1){
+            New_Hot_Level = Hot_level_3;
+        }else if(low_boundary_1<=pg_freq && pg_freq<=MAX_Frequency){
+            New_Hot_Level = Max_Level; // Hot_level_4
+        }else{
+            printf("2201 err\n");
+            New_Hot_Level = Hot_level_0; // 要改成abort()
+        }
+
         /*1. 先申請一個Empty PPA*/
-        int New_Hot_Level = original_hot_level+1;
         struct ppa *empty_ppa = NULL;
         if (check == 1){ // sensitive LPN
             // printf("1799\n");
@@ -2155,53 +2190,11 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 
         /*3. 更新Lba的Hot level*/
 		if(is_new_Lpn == NEW_LPN){ // new lpn
-            //fprintf(outfile27, "New lpn %lu\n", lpn);
 			new_pg->LPN_frequency = 1;
             new_pg->Hot_level = Hot_level_0;
 		}else{
-            //fprintf(outfile27, "Old lpn %lu\n", lpn);
-            new_pg->LPN_frequency = old_lpn_frequency+1;
-
-            if (new_pg->LPN_frequency > MAX_Frequency){
-                MAX_Frequency = new_pg->LPN_frequency;
-            }
-
-            int pg_freq = new_pg->LPN_frequency;
-            double low_boundary_1 = MAX_Frequency * ((Level_count -1) / Level_count);
-            double low_boundary_2 = MAX_Frequency * ((Level_count -2) / Level_count);
-            double low_boundary_3 = MAX_Frequency * ((Level_count -3) / Level_count);
-            double low_boundary_4 = MAX_Frequency * ((Level_count -4) / Level_count);
-            double low_boundary_5 = 0;
-
-            /*if (low_boundary_1<new_pg->LPN_frequency && new_pg->LPN_frequency <= MAX_Frequency){
-                new_pg->Hot_level = Max_Level; // Hot_level_4
-            }else if (low_boundary_2<new_pg->LPN_frequency && new_pg->LPN_frequency <= low_boundary_1)
-            {
-                new_pg->Hot_level = Hot_level_3;
-            }else if (low_boundary_3<new_pg->LPN_frequency && new_pg->LPN_frequency <= low_boundary_2)
-            {
-                new_pg->Hot_level = Hot_level_2;
-            }else if (low_boundary_4<new_pg->LPN_frequency && new_pg->LPN_frequency <= low_boundary_3)
-            {
-                new_pg->Hot_level = Hot_level_1;
-            }else{
-                new_pg->Hot_level = Hot_level_0;
-            }*/
-            if (low_boundary_5<=pg_freq && pg_freq<low_boundary_4){
-                new_pg->Hot_level = Hot_level_0;
-            }else if(low_boundary_4<=pg_freq && pg_freq<low_boundary_3){
-                new_pg->Hot_level = Hot_level_1;
-            }else if(low_boundary_3<=pg_freq && pg_freq<low_boundary_2){
-                new_pg->Hot_level = Hot_level_2;
-            }else if(low_boundary_2<=pg_freq && pg_freq<low_boundary_1){
-                new_pg->Hot_level = Hot_level_3;
-            }else if(low_boundary_1<=pg_freq && pg_freq<MAX_Frequency){
-                new_pg->Hot_level = Max_Level; // Hot_level_4
-            }else{
-                printf("2201 err\n");
-                new_pg->Hot_level = Hot_level_0; // 要改成abort()
-                //abort();
-            }
+            new_pg->LPN_frequency = new_freq;
+            new_pg->Hot_level = New_Hot_Level;
 		}
 
         /*4. mark page valid*/
