@@ -58,6 +58,7 @@ const char* fileName50 = "gc_blk_cnt.txt";
 
 const char* fileName51 = "write_node.txt";
 const char* fileName52 = "trim_node.txt";
+const char* fileName53 = "61_sublock_erase_cnt.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -113,6 +114,7 @@ FILE *outfile50 = NULL;
 
 FILE *outfile51 = NULL;
 FILE *outfile52 = NULL;
+FILE *outfile53 = NULL;
 //#define FEMU_DEBUG_FTL
 
 //static bool wp_2 = false;
@@ -1082,13 +1084,13 @@ static void mark_page_invalid(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
     subblk->ipc++;
     if (subblk->ipc > spp->pgs_per_subblk){
         printf("1019 err\n");
-        abort();
+        //abort();
     }
 
     subblk->vpc--;
     if (subblk->vpc < 0){
         printf("1024 err\n");
-        abort();
+        //abort();
     }
 
     Invalid_Page++;
@@ -1148,12 +1150,12 @@ static void mark_page_valid(struct ssd *ssd, struct ppa *ppa)
     subblk->vpc++;
     if (subblk->vpc > spp->pgs_per_subblk){
         printf("1085 err\n");
-        abort();
+        //abort();
     } 
     subblk->epc--;
     if (subblk->epc < 0){
         printf("1090 err\n");
-        abort();
+        //abort();
     }
 
     Valid_Page++;
@@ -1437,7 +1439,7 @@ static struct ppa *get_Empty_pg_from_Finder2(struct ssd *ssd, int Hot_Level)
             }
         }
         printf("1338 err\n");
-        abort();
+        //abort();
     }else{
         //printf("not find \n");
         free(array);
@@ -1678,6 +1680,7 @@ static int do_gc(struct ssd *ssd, bool force, NvmeRequest *req)
         if (victim_sublk->was_victim == SUBLK_VICTIM){
             printf("1655\n");
             clean_one_subblock(ssd, &ppa, req);
+            fprintf(outfile53, "%d %d %d %d %d\n", ppa.g.ch, ppa.g.lun, ppa.g.pl, ppa.g.blk, ppa.g.subblk);
             
             printf("1658\n");
             mark_subblock_free(ssd, &ppa);
@@ -1809,6 +1812,7 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
                     printf("1740\n");
                     sublk_ppa.g.subblk = k;
                     clean_one_subblock(ssd, &sublk_ppa, NULL);
+                    fprintf(outfile53, "%d %d %d %d %d\n", sublk_ppa.g.ch, sublk_ppa.g.lun, sublk_ppa.g.pl, sublk_ppa.g.blk, sublk_ppa.g.subblk);
                 }
                 for (int k=0; k<spp->subblks_per_blk; k++){
                     printf("1744\n");
@@ -1823,6 +1827,7 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
                     printf("1750\n");
                     sublk_ppa.g.subblk = k;
                     clean_one_subblock(ssd, &sublk_ppa, NULL);
+                    fprintf(outfile53, "%d %d %d %d %d\n", sublk_ppa.g.ch, sublk_ppa.g.lun, sublk_ppa.g.pl, sublk_ppa.g.blk, sublk_ppa.g.subblk);
                 }
                 for (int k=0; k<=last_index; k++){
                     printf("1755\n");
@@ -2311,6 +2316,7 @@ static void *ftl_thread(void *arg)
 
     outfile51 = fopen(fileName51, "wb");
     outfile52 = fopen(fileName52, "wb");
+    outfile53 = fopen(fileName53, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -2451,6 +2457,7 @@ static void *ftl_thread(void *arg)
 
     fclose(outfile51);
     fclose(outfile52);
+    fclose(outfile53);
 
     return NULL;
 }
