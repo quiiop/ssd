@@ -15,6 +15,7 @@ const char* fileName42 = "ERASE_lat.txt";
 const char* fileName47 = "ssd_write_lat.txt";
 const char* fileName48 = "ssd_read_lat.txt";
 const char* fileName51 = "write_node.txt";
+const char* fileName62 = "61_blk_gc_cnt.txt";
 
 FILE *outfile29 = NULL;
 FILE *outfile30 = NULL;
@@ -29,6 +30,7 @@ FILE *outfile42 = NULL;
 FILE *outfile47 = NULL;
 FILE *outfile48 = NULL;
 FILE *outfile51 = NULL;
+FILE *outfile62 = NULL;
 
 static void *ftl_thread(void *arg);
 
@@ -795,6 +797,7 @@ static int do_gc(struct ssd *ssd, bool force)
             lunp = get_lun(ssd, &ppa);
             clean_one_block(ssd, &ppa);
             mark_block_free(ssd, &ppa);
+            fprintf(outfile62, "%d %d %d %d\n", ppa.g.ch, ppa.g.lun, ppa.g.pl, ppa.g.blk);
 
             if (spp->enable_gc_delay) {
                 struct nand_cmd gce;
@@ -886,6 +889,7 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
         if (target_ppa != NULL){
             clean_one_block(ssd, target_ppa);
             mark_block_free(ssd, target_ppa);
+            fprintf(outfile62, "%d %d %d %d\n", target_ppa->g.ch, target_ppa->g.lun, target_ppa->g.pl, target_ppa->g.blk);
 
             struct line *line = get_line(ssd, target_ppa);;
             line->ipc = line->ipc - ipc;
@@ -1090,6 +1094,7 @@ static void *ftl_thread(void *arg)
     outfile47 = fopen(fileName47, "wb");
     outfile48 = fopen(fileName48, "wb");
     outfile51 = fopen(fileName51, "wb");
+    outfile62 = fopen(fileName62, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -1155,6 +1160,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile47);
     fclose(outfile48);
     fclose(outfile51);
+    fclose(outfile62);
 
     return NULL;
 }
