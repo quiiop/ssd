@@ -60,6 +60,8 @@ const char* fileName51 = "write_node.txt";
 const char* fileName52 = "trim_node.txt";
 const char* fileName53 = "61_sublock_erase_cnt.txt";
 
+const char* fileName54 = "info.txt";
+
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
 FILE *outfile3 = NULL;
@@ -115,6 +117,7 @@ FILE *outfile50 = NULL;
 FILE *outfile51 = NULL;
 FILE *outfile52 = NULL;
 FILE *outfile53 = NULL;
+FILE *outfile54 = NULL;
 //#define FEMU_DEBUG_FTL
 
 //static bool wp_2 = false;
@@ -147,7 +150,9 @@ uint64_t current_block_cnt = 0;
 
 // 全局控制的
 static uint64_t MAX_Frequency = 0;
-// static uint64_t Write_Lpn_Cnt = 0;
+
+// debug info
+static struct INFO info;
 
 static inline bool should_gc_sublk(struct ssd *ssd)
 {
@@ -164,7 +169,7 @@ static inline bool should_gc_sublk(struct ssd *ssd)
    // printf("Queue_Size = %d\n", Free_Block_Management->Queue_Size);
    
    //printf("120\n");
-   double threshold = 4096 * 0.5;
+   double threshold = 8*8*1024*0.5;
    if (Free_Block_Management->Queue_Size < threshold){ //total 4096 blks
         return true;
    }else{
@@ -375,14 +380,14 @@ static int Push(struct Queue *queue, struct nand_block *blk)
     if (queue->head == NULL){
         queue->head = n;
         queue->tail = n;
-        queue->Queue_Size++;
-        return Successful;
     }else{
         queue->tail->next = n;
         queue->tail = n;
-        queue->Queue_Size++;
-        return Successful;
     }
+
+    queue->Queue_Size++;
+    queue->MAX++;
+    return Successful;
 }
 
 static int Pop(struct Queue *queue)
@@ -444,6 +449,7 @@ static struct Queue *init_Queue(int id)
     struct Queue *queue = malloc(sizeof(struct Queue));
     queue->id = id;
     queue->Queue_Size = 0;
+    queue->MAX = 0;
     queue->head = NULL;
     queue->tail = NULL;
     return queue;
@@ -470,7 +476,7 @@ static void ssd_init_params(struct ssdparams *spp)
     spp->subblks_per_blk = 16; /* kuo */
     spp->pgs_per_blk = spp->pgs_per_subblk * spp->subblks_per_blk; /* kuo */
     
-    spp->blks_per_pl = 64; /* 16GB */  //senior set 128 ,256->64
+    spp->blks_per_pl = 1024; /* 64=4G , 1024=64G */  //senior set 128 ,256->64
     spp->pls_per_lun = 1;
     spp->luns_per_ch = 8;//8->2
     spp->nchs = 8;//8->4
@@ -557,12 +563,16 @@ static void ssd_init_nand_subblk(struct nand_subblock *subblk, struct ssdparams 
     for (uint64_t i = 0; i < subblk->npgs; i++) {
         ssd_init_nand_page(&subblk->pg[i], spp);
     }
-    
+
     subblk->ch = ch_id;
     subblk->lun = lun_id;
     subblk->pl = pl_id;
     subblk->blk = blk_id;
     subblk->sublk = sublk_id;
+
+    /*debug*/
+    info.total_page += subblk->npgs;
+    info.current_empty_page += subblk->npgs;
 }
 
 static void ssd_init_nand_blk(struct nand_block *blk, struct ssdparams *spp, uint64_t ch_id, uint64_t lun_id, uint64_t pl_id, uint64_t blk_id, FILE *outfile)
@@ -710,12 +720,57 @@ static void show_info(struct nand_block blk)
 */
 /* Finder Operation over */
 
+static void init_info(void)
+{
+    info.total_page = 0;
+    info.current_empty_page = 0;
+    info.current_valid_page = 0;
+    info.current_invalid_page = 0;
+
+    info.total_sublk = 0;
+    info.current_empty_sublk = 0;
+    info.current_valid_sublk = 0;
+    info.current_invalid_sublk = 0;
+
+    info.total_blk = 0;
+    info.current_empty_blk = 0;
+    info.current_valid_blk = 0;
+    info.current_invalid_blk = 0;
+}
+
+static void record_info(void)
+{
+    outfile54 = fopen( fileName54, "wb" );
+    fprintf(outfile54, "info\n");
+    fprintf(outfile54, "total page = %ld\n", info.total_page);
+    fprintf(outfile54, "current empty page = %ld\n", info.current_empty_page);
+    fprintf(outfile54, "current valid page = %ld\n", info.current_valid_page);
+    fprintf(outfile54, "current invalid page = %ld\n", info.current_invalid_page);
+    fprintf(outfile54, "-----------------------------\n");
+
+    fprintf(outfile54, "total sublk = %ld\n", info.total_sublk);
+    fprintf(outfile54, "current empty sublk = %ld\n", info.current_empty_sublk);
+    fprintf(outfile54, "current valid sublk = %ld\n", info.current_valid_sublk);
+    fprintf(outfile54, "current invalid sublk = %ld\n", info.current_invalid_sublk);
+    fprintf(outfile54, "-----------------------------\n");
+
+    fprintf(outfile54, "total blk = %ld\n", info.total_blk);
+    fprintf(outfile54, "current empty blk = %ld\n", info.current_empty_blk);
+    fprintf(outfile54, "current valid blk = %ld\n", info.current_valid_blk);
+    fprintf(outfile54, "current invalid blk = %ld\n", info.current_invalid_blk);
+    fprintf(outfile54, "-----------------------------\n");
+    fprintf(outfile54, " \n");
+    fclose(outfile54);
+}
+
 void ssd_init(FemuCtrl *n)
 {
     struct ssd *ssd = n->ssd;
     struct ssdparams *spp = &ssd->sp;
 
     ftl_assert(ssd);
+
+    init_info();
 
     ssd_init_params(spp);
     /* init Free Block Management */
@@ -731,6 +786,7 @@ void ssd_init(FemuCtrl *n)
         ssd_init_ch(&ssd->ch[i], spp, i, outfile24);
     }
     fclose(outfile24);
+    record_info();
 
     /* initialize maptbl */
     ssd_init_maptbl(ssd);
@@ -1531,8 +1587,8 @@ static struct ppa *Get_Empty_Page_For_General_LPN(struct ssd *ssd, int Hot_Level
                 //printf("1423\n");
                 return empty_pg;
         }else{
+                printf("Free_Block_Management->Queue_Size= %d, Max= %d\n", Free_Block_Management->Queue_Size, Free_Block_Management->MAX);
                 free(empty_pg);
-                
                 //printf("1426\n");
                 return NULL;
         }
@@ -2011,7 +2067,8 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     printf("1968\n");
     uint64_t start_lpn = lba / spp->secs_per_pg;
     uint64_t end_lpn = (lba + len - 1) / spp->secs_per_pg;
-    //fprintf(outfile32, "start= %lu, end= %lu\n", start_lpn, end_lpn);
+    fprintf(outfile32, "start= %lu, end= %lu\n", start_lpn, end_lpn);
+
     struct ppa ppa;
     uint64_t lpn;
     uint64_t curlat = 0, maxlat = 0;
@@ -2148,7 +2205,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
             New_Hot_Level = Hot_level_0; // 要改成abort()
         }
 
-        /*1. 先申請一個Empty PPA*/
+        //1. 先申請一個Empty PPA
         struct ppa *empty_ppa = NULL;
         if (check == 1){ // sensitive LPN
             // printf("1799\n");
@@ -2183,7 +2240,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 		set_rmap_ent(ssd, lpn, &ppa);
         //printf("1823\n");
 
-		/*2. 設定Page資料*/
+		//2. 設定Page資料
         // printf("1729\n");
 		struct nand_page *new_pg = get_pg(ssd, &ppa);
         // printf("1731\n");
@@ -2193,7 +2250,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
 			new_pg->pg_type = PG_General;
 		}
 
-        /*3. 更新Lba的Hot level*/
+        //3. 更新Lba的Hot level
 		if(is_new_Lpn == NEW_LPN){ // new lpn
 			new_pg->LPN_frequency = 1;
             new_pg->Hot_level = Hot_level_0;
@@ -2202,7 +2259,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
             new_pg->Hot_level = New_Hot_Level;
 		}
 
-        /*4. mark page valid*/
+        //4. mark page valid
         //printf("1752\n");
         mark_page_valid(ssd, &ppa);
         //printf("1754\n");
@@ -2212,11 +2269,11 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         swr.type = USER_IO;
         swr.cmd = NAND_WRITE;
         swr.stime = req->stime;
-        /* get latency statistics */
+        // get latency statistics
         curlat = ssd_advance_status(ssd, &ppa, &swr);
         maxlat = (curlat > maxlat) ? curlat : maxlat;
         
-        /* calucate write pda*/
+        // calucate write pda
         // uint64_t pba = ppa2pgidx(ssd, &ppa);
     }
 
@@ -2253,6 +2310,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     printf("2185\n");
     fprintf(outfile47, "%lu\n", total_time);
     printf("2187\n");
+
     return maxlat;
 }
 
