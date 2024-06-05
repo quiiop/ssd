@@ -335,6 +335,7 @@ struct Finder2{
 struct Queue{
     int id;
     int Queue_Size;
+    int MAX;
     struct node *head;
     struct node *tail;
 
@@ -347,6 +348,22 @@ struct Queue{
     */ 
 };
 
+struct INFO{
+    unsigned long total_page;
+    unsigned long current_empty_page;
+    unsigned long current_valid_page;
+    unsigned long current_invalid_page;
+
+    unsigned long total_sublk;
+    unsigned long current_empty_sublk;
+    unsigned long current_valid_sublk;
+    unsigned long current_invalid_sublk;
+
+    unsigned long total_blk;
+    unsigned long current_empty_blk;
+    unsigned long current_valid_blk;
+    unsigned long current_invalid_blk;
+};
 
 struct ssd {
     char *ssdname;
