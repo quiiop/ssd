@@ -16,6 +16,7 @@ const char* fileName47 = "ssd_write_lat.txt";
 const char* fileName48 = "ssd_read_lat.txt";
 const char* fileName51 = "write_node.txt";
 const char* fileName62 = "61_blk_gc_cnt.txt";
+const char* fileName63 = "lba_record.txt";
 
 FILE *outfile29 = NULL;
 FILE *outfile30 = NULL;
@@ -31,9 +32,13 @@ FILE *outfile47 = NULL;
 FILE *outfile48 = NULL;
 FILE *outfile51 = NULL;
 FILE *outfile62 = NULL;
+FILE *outfile63 = NULL;
 
+unsigned int max_lba = 0;
 static void *ftl_thread(void *arg);
 
+static unsigned long boundary_1 = 2359293*512; 
+static unsigned long boundary_2 = 3932155*512;
 
 static inline bool should_gc(struct ssd *ssd)
 {
@@ -270,7 +275,7 @@ static void ssd_init_params(struct ssdparams *spp)
     spp->secsz = 512;
     spp->secs_per_pg = 8;
     spp->pgs_per_blk = 256;
-    spp->blks_per_pl = 256; /* 16GB */
+    spp->blks_per_pl = 64; /* 16GB */
     spp->pls_per_lun = 1;
     spp->luns_per_ch = 8;
     spp->nchs = 8;
@@ -855,7 +860,7 @@ static uint64_t ssd_read(struct ssd *ssd, NvmeRequest *req)
 
 static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table, int sensitive_lpn_count, int temp_lpn_count)
 {
-    // printf("do secure deletion \n");
+    printf("do secure deletion \n");
     struct line_mgmt *lm = &ssd->lm;
     int index = 0;
     //printf("1536\n");
@@ -920,8 +925,10 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     start_t = clock();
 
     uint64_t lba = req->slba;
-    fprintf(outfile39, "%lu\n", lba);
-    fprintf(outfile51, "%lu\n", lba);
+    if (max_lba < lba){
+        max_lba = lba;
+        fprintf(outfile63, "max lba = %d\n", max_lba);
+    }
 
     struct ssdparams *spp = &ssd->sp;
     int len = req->nlb;
@@ -949,17 +956,13 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     }
 
     fprintf(outfile30, "%lu\n", (end_lpn-start_lpn+1));
-    
-    int boundary_1 = 750000; // 750000
-    int boundary_2 = 1250000;
-
+    printf("lba %ld\n", lba);
     if (boundary_1<=lba && lba<=boundary_2){
+        printf("961\n");
         check = 1;
     }else{
         check = 0;
     }
-
-    // printf("write req cnt %d\n", write_request);
 
     struct nand_cmd swr;
     swr.type = USER_IO;
@@ -1095,6 +1098,7 @@ static void *ftl_thread(void *arg)
     outfile48 = fopen(fileName48, "wb");
     outfile51 = fopen(fileName51, "wb");
     outfile62 = fopen(fileName62, "wb");
+    outfile63 = fopen(fileName63, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -1161,6 +1165,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile48);
     fclose(outfile51);
     fclose(outfile62);
+    fclose(outfile63);
 
     return NULL;
 }
