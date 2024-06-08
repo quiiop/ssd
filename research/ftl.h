@@ -129,6 +129,8 @@ struct nand_page {
 #define SUBLK_NOT_VICTIM 1
 #define SUBLK_NOT_IN_FINDER1 -1
 #define SUBLK_NOT_IN_FINDER2 -1
+#define NO_NEED_DO_SEC 0 // 不需要做secure deletio
+#define NEED_DO_SEC 1 // 需要做secure deletion
 
 struct nand_subblock { /* kuo */
     struct nand_page *pg;
@@ -142,6 +144,7 @@ struct nand_subblock { /* kuo */
     int was_victim; // sublk是否符合GC的條件
     int Current_Hot_Level; // sublk現在Hot Level
     uint64_t current_page_id;// 現在在使用哪個Page
+    int whether_do_sec; //是否需要做secure deletion
 
     uint64_t ch;
     uint64_t lun;
@@ -335,7 +338,6 @@ struct Finder2{
 struct Queue{
     int id;
     int Queue_Size;
-    int MAX;
     struct node *head;
     struct node *tail;
 
@@ -348,22 +350,6 @@ struct Queue{
     */ 
 };
 
-struct INFO{
-    unsigned long total_page;
-    unsigned long current_empty_page;
-    unsigned long current_valid_page;
-    unsigned long current_invalid_page;
-
-    unsigned long total_sublk;
-    unsigned long current_empty_sublk;
-    unsigned long current_valid_sublk;
-    unsigned long current_invalid_sublk;
-
-    unsigned long total_blk;
-    unsigned long current_empty_blk;
-    unsigned long current_valid_blk;
-    unsigned long current_invalid_blk;
-};
 
 struct ssd {
     char *ssdname;
