@@ -549,6 +549,7 @@ static void ssd_init_nand_subblk(struct nand_subblock *subblk, struct ssdparams 
     subblk->wp = 0;
     subblk->was_full = SUBLK_NOT_FULL;
     subblk->was_victim = SUBLK_NOT_VICTIM;
+    subblk->whether_do_sec = NO_NEED_DO_SEC;
     subblk->Current_Hot_Level = SUBLK_NOT_IN_FINDER2;
     subblk->current_page_id = 0;
     
@@ -1082,13 +1083,13 @@ static void mark_page_invalid(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
     subblk->ipc++;
     if (subblk->ipc > spp->pgs_per_subblk){
         printf("1019 err\n");
-        abort();
+        //abort();
     }
 
     subblk->vpc--;
     if (subblk->vpc < 0){
         printf("1024 err\n");
-        abort();
+        //abort();
     }
 
     Invalid_Page++;
@@ -1148,12 +1149,12 @@ static void mark_page_valid(struct ssd *ssd, struct ppa *ppa)
     subblk->vpc++;
     if (subblk->vpc > spp->pgs_per_subblk){
         printf("1085 err\n");
-        abort();
+        // abort();
     } 
     subblk->epc--;
     if (subblk->epc < 0){
         printf("1090 err\n");
-        abort();
+        // abort();
     }
 
     Valid_Page++;
@@ -1255,6 +1256,7 @@ static void mark_subblock_free(struct ssd *ssd, struct ppa *ppa)
     sublk->erase_cnt++;
     sublk->was_full = SUBLK_NOT_FULL;
     sublk->was_victim = SUBLK_NOT_VICTIM;
+    sublk->whether_do_sec = NO_NEED_DO_SEC;
     sublk->Current_Hot_Level = SUBLK_NOT_IN_FINDER2;
     sublk->current_page_id = 0;
 
@@ -1437,7 +1439,7 @@ static struct ppa *get_Empty_pg_from_Finder2(struct ssd *ssd, int Hot_Level)
             }
         }
         printf("1338 err\n");
-        abort();
+        //abort();
     }else{
         //printf("not find \n");
         free(array);
@@ -1786,7 +1788,7 @@ static int do_secure_deletion(struct ssd *ssd, struct ppa *secure_deletion_table
             int count = 0;
             int last_index = 0;
             for (int k=0; k<spp->subblks_per_blk; k++){
-                if (blk->subblk[k].was_victim == SUBLK_VICTIM){  
+                if (blk->subblk[k].was_victim == SUBLK_VICTIM || blk->subblk[k].whether_do_sec == NEED_DO_SEC){  
                     last_index = k;
                     count++;
                 }
@@ -2094,7 +2096,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
                 //printf("1699\n");
                 struct nand_subblock *sublk = get_subblk(ssd, &ppa);
                 //printf("1785\n");
-                sublk->was_victim = SUBLK_VICTIM;
+                sublk->whether_do_sec = NEED_DO_SEC;
                 sensitive_lpn_count++;
                 is_need_secure_deletion = 1;
 			}

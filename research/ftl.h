@@ -129,6 +129,8 @@ struct nand_page {
 #define SUBLK_NOT_VICTIM 1
 #define SUBLK_NOT_IN_FINDER1 -1
 #define SUBLK_NOT_IN_FINDER2 -1
+#define NO_NEED_DO_SEC 0
+#define NEED_DO_SEC 1
 
 struct nand_subblock { /* kuo */
     struct nand_page *pg;
@@ -142,6 +144,7 @@ struct nand_subblock { /* kuo */
     int was_victim; // sublk是否符合GC的條件
     int Current_Hot_Level; // sublk現在Hot Level
     uint64_t current_page_id;// 現在在使用哪個Page
+    int whether_do_sec;
 
     uint64_t ch;
     uint64_t lun;
