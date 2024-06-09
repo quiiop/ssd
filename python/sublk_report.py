@@ -84,5 +84,7 @@ print("IOPS = ",IOPS)
 # WA
 Move_Page_Cnt = calculate_WA(dir, 'WA_Cnt_Record.txt')
 Write_Page_Cnt = calculate_WA(dir, 'Write_Cnt_Record.txt')
+print("Move_Page_Cnt ",Move_Page_Cnt)
+print("Write_Page_Cnt ",Write_Page_Cnt)
 WA = (Write_Page_Cnt[0]+Move_Page_Cnt[0]) / Write_Page_Cnt[0]
 print("WA = ", WA)
