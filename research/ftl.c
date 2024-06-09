@@ -67,6 +67,11 @@ const char* fileName58 = "check_blk.txt";
 const char* fileName59 = "65_finder1.txt";
 const char* fileName60 = "65_test_op.txt";
 const char* fileName61 = "68_test_op_space_2.txt";
+const char* fileName62 = "68_final_finder1.txt";
+const char* fileName63 = "68_final_finder2.txt";
+const char* fileName64 = "68_test_try_to_fix_finder1.txt";
+const char* fileName65 = "68_test_try_to_fix_finder2.txt";
+const char* fileName66 = "68_fix_system_record.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -131,6 +136,11 @@ FILE *outfile58 = NULL;
 FILE *outfile59 = NULL;
 FILE *outfile60 = NULL;
 FILE *outfile61 = NULL;
+FILE *outfile62 = NULL;
+FILE *outfile63 = NULL;
+FILE *outfile64 = NULL;
+FILE *outfile65 = NULL;
+FILE *outfile66 = NULL;
 //#define FEMU_DEBUG_FTL
 
 //static bool wp_2 = false;
@@ -163,8 +173,8 @@ uint64_t current_block_cnt = 0;
 
 // 全局控制的
 static uint64_t MAX_Frequency = 0;
-static unsigned long boundary_1 = 2359293; 
-static unsigned long boundary_2 = 3932155;
+static unsigned long boundary_1 = 750000; 
+static unsigned long boundary_2 = 1250000;
 
 // OP額外空間
 static int op_size = 20;
@@ -174,6 +184,8 @@ static struct nand_block **op_space;
 // function 宣告
 // static struct ppa *use_op_space_to_force_get_empty_pg(struct ssd *ssd);
 // static struct ppa *test_use_op_space(struct ssd *ssd, struct nand_block **tmp_arr);
+static void try_to_fix_v2(struct ssd *ssd);
+static void Print_Finder(struct ssd *ssd, FILE *outfile, int finder_id);
 
 static inline bool should_gc_sublk(struct ssd *ssd)
 {
@@ -760,7 +772,7 @@ static void show_info(struct nand_block blk)
         fprintf(outfile60, "=======================\n");
     }
     fclose(outfile60);
-}
+}*/
 
 static void test_valid_page(struct ssdparams *spp, struct nand_block *blk)
 {
@@ -804,7 +816,7 @@ static void test_record_blk(struct ssdparams *spp, struct nand_block *blk)
     fprintf(outfile61, "===================\n");
 }
 
-static void test_op_space_2(struct ssd *ssd)
+/*static void test_op_space_2(struct ssd *ssd)
 {
     outfile61 = fopen(fileName61, "wb");
     struct ssdparams *spp = &ssd->sp;
@@ -837,6 +849,37 @@ static void test_op_space_2(struct ssd *ssd)
 
     fclose(outfile61);
 }*/
+
+static void test_try_to_fix_v2(struct ssd *ssd)
+{
+    outfile61 = fopen(fileName61, "wb");
+    outfile64 = fopen(fileName64, "wb");
+    outfile65 = fopen(fileName65, "wb");
+    
+    struct ssdparams *spp = &ssd->sp;
+    struct nand_block **tmp_arr = malloc(op_size * sizeof(struct nand_block *));
+
+    for (int i=0; i<op_size; i++){
+        struct nand_block *blk = Peek(Free_Block_Management);
+        Pop(Free_Block_Management);
+        if (blk==NULL){
+            printf("754 err\n");
+        }
+
+        tmp_arr[i] = blk;
+        test_valid_page(spp, blk);
+        test_invalid_page(spp, blk);
+        test_record_blk(spp, blk);
+    }
+    
+    try_to_fix_v2(ssd);
+    Print_Finder(ssd, outfile64, Finder1_ID);
+    Print_Finder(ssd, outfile65, Finder2_ID);
+
+    fclose(outfile61);
+    fclose(outfile64);
+    fclose(outfile65);
+}
 
 void ssd_init(FemuCtrl *n)
 {
@@ -894,6 +937,7 @@ void ssd_init(FemuCtrl *n)
     // test_op_space_2(ssd);
     // test_op_space(ssd);
 
+    test_try_to_fix_v2(ssd);
     qemu_thread_create(&ssd->ftl_thread, "FEMU-FTL-Thread", ftl_thread, n,
                        QEMU_THREAD_JOINABLE);
 }
@@ -1813,7 +1857,7 @@ static struct ppa *Get_Empty_Page_For_Sensitive_LPN(struct ssd *ssd, int Hot_Lev
 }
 
 // 這是修復程序 最後不要用 讀研究所好煩 老師放我走 Zzz
-static int check_page_index(struct ssdparams *spp, struct nand_subblock *sublk)
+/*static int check_page_index(struct ssdparams *spp, struct nand_subblock *sublk)
 {
     int err = -1;
     for (int i=0; i<spp->pgs_per_subblk; i++){
@@ -1823,9 +1867,9 @@ static int check_page_index(struct ssdparams *spp, struct nand_subblock *sublk)
         }
     }
     return err;
-} 
+}*/ 
 
-static void add_blk_in_finder1(struct nand_block *blk, int victim_sublk_cnt)
+/*static void add_blk_in_finder1(struct nand_block *blk, int victim_sublk_cnt)
 {
     // 沒有victim sublkc
     if (victim_sublk_cnt == 0){
@@ -1839,9 +1883,9 @@ static void add_blk_in_finder1(struct nand_block *blk, int victim_sublk_cnt)
     }
 
     Add_Finder1(blk, blk->In_Finder1_Position, new_position);
-}
+}*/
 
-static struct ppa *try_to_fix(struct ssd *ssd)
+/*static struct ppa *try_to_fix(struct ssd *ssd)
 {
     printf("1720 (@@) start try to fix\n");
     struct ssdparams *spp = &ssd->sp;
@@ -1883,6 +1927,8 @@ static struct ppa *try_to_fix(struct ssd *ssd)
                 if (thres >= 2){
                     sublk->was_victim = SUBLK_VICTIM;
                     victim_sublk_cnt++;
+                }else{
+                    sublk->was_victim = SUBLK_NOT_VICTIM;
                 }
             }
 
@@ -1897,6 +1943,174 @@ static struct ppa *try_to_fix(struct ssd *ssd)
     }else{
         return empty_ppa;
     }
+}*/
+
+static void restart_create_finder1(void)
+{
+    int size = 16;
+    for (int i=0; i<size; i++){
+        struct link list = finder->list[i];
+        list.head = NULL;
+        list.tail = NULL;
+        printf("%d\n", list.id);
+    }
+}
+
+static void restart_create_finder2(void)
+{
+    int size = nHotLevel;
+    for (int i=0; i<size; i++){
+        struct link list = finder2->list[i];
+        list.head = NULL;
+        list.tail = NULL;
+        printf("%d\n", list.id);
+    }
+}
+
+static void restart_queue(void)
+{
+    int cnt = Free_Block_Management->Queue_Size;
+    if (cnt > 0){
+        for (int i=0; i<cnt; i++){
+            Pop(Free_Block_Management);
+        }
+    }
+}   
+
+static void reset_blk(struct nand_block *blk)
+{
+    blk->In_Finder1_Position = Blk_Not_In_Finder1;
+    blk->In_Finder2_Position = Blk_Not_in_Finder2;
+}
+
+static void reset_sublk(struct nand_subblock *sublk, struct ssdparams *spp)
+{
+    sublk->ipc = 0;
+    sublk->vpc = 0;
+    sublk->epc = spp->pgs_per_subblk;
+    sublk->was_full = SUBLK_NOT_FULL;
+    sublk->was_victim = SUBLK_NOT_VICTIM;
+    sublk->Current_Hot_Level = SUBLK_NOT_IN_FINDER2;
+    sublk->whether_do_sec = sublk->whether_do_sec;
+}
+
+static void Add_blk_to_finder1(int victim_sublk_cnt, struct nand_block *blk)
+{
+    if (victim_sublk_cnt > 0){
+        int pos = victim_sublk_cnt -1;
+        struct node *n = init_node(blk);
+
+        Add_Link(&finder->list[pos], n);
+        blk->In_Finder1_Position = pos;
+    }
+}
+
+static void Add_blk_to_finder2(int hot_level, struct nand_block *blk)
+{
+    if (hot_level >= 0){
+        struct node *n = init_node(blk);
+        Add_Link(&finder2->list[hot_level], n);
+        blk->In_Finder2_Position = hot_level;
+    }
+}
+
+static void setting_blk(struct ssd *ssd, struct nand_block *blk)
+{
+    struct ssdparams *spp = &ssd->sp;
+    reset_blk(blk);
+    int victim_sublk_cnt = 0;
+    int hot_level = -100;
+    int blk_epc = 0; 
+
+    // 處理block裡的sublk
+    for (int n=0; n<spp->subblks_per_blk; n++){
+        struct nand_subblock *sublk = &blk->subblk[n];
+        reset_sublk(sublk, spp);
+
+        for (int m=0; m<spp->pgs_per_subblk; m++){
+            struct nand_page *pg = &sublk->pg[m];
+
+            if (pg->status == PG_VALID){
+                if (hot_level == -100){
+                    hot_level = pg->Hot_level;
+                }
+                sublk->vpc++;
+                sublk->epc--;
+
+                sublk->current_page_id = m;
+            }
+            if (pg->status == PG_INVALID){
+                sublk->ipc++;
+                sublk->vpc--;
+
+                sublk->current_page_id = m;
+            }
+            if (pg->status == PG_Empty){
+                blk_epc++;
+            }
+        }
+
+        if ((sublk->ipc+sublk->vpc) == spp->pgs_per_subblk){
+            sublk->was_full = SUBLK_FULL;
+        }
+        
+        int thres = 0;
+        if (sublk->vpc == 0){
+            thres = (sublk->ipc+sublk->vpc)/1;
+        }else{
+            thres = (sublk->ipc+sublk->vpc)/sublk->vpc;
+        }
+
+        if (thres >= 2){
+            sublk->was_victim = SUBLK_VICTIM;
+            victim_sublk_cnt++;
+        }
+
+        if (sublk->ipc >0 || sublk->vpc>0){
+            blk->current_sublk_id = n;
+        }
+    }
+
+    // 處理blk
+    if (blk_epc == (spp->subblks_per_blk * spp->pgs_per_subblk)){
+        Push(Free_Block_Management, blk);
+    }else{
+        Add_blk_to_finder1(victim_sublk_cnt, blk);
+        Add_blk_to_finder2(hot_level, blk);
+    }
+    
+}
+
+static void try_to_fix_v2(struct ssd *ssd)
+{
+    outfile66 = fopen(fileName66, "wb");
+    printf("1720 (@@) start try to fix\n");
+    struct ssdparams *spp = &ssd->sp;
+    struct nand_block *target_blk = NULL;
+
+    restart_create_finder1();
+    restart_create_finder2();
+    restart_queue();
+
+    struct ppa *ppa = malloc(sizeof(struct ppa));
+    for (int ch = 0; ch < spp->nchs; ch++) {
+        for (int lun=0; lun<spp->luns_per_ch; lun++){
+            for (int pl=0; pl<spp->pls_per_lun; pl++){
+                for (int blk=0; blk<spp->blks_per_pl; blk++){
+                    ppa->g.ch = ch;
+                    ppa->g.lun = lun;
+                    ppa->g.pl = pl;
+                    ppa->g.blk = blk;
+                    target_blk = get_blk(ssd, ppa);
+                    if (target_blk != NULL){
+                        setting_blk(ssd, target_blk);
+                        fprintf(outfile66, "Fix blk %ld\n", target_blk->id);
+                    }
+                }
+            }
+        }
+    }
+    fclose(outfile66);
 }
 
 // 這是我最後的波紋急走 吃老衲一招 
@@ -2102,6 +2316,9 @@ static struct ppa *use_op_space(struct ssd *ssd)
 
     if (first_empty_ppa == NULL){
         printf("2001 err\n");
+        Print_Finder(ssd, outfile62, 1);
+        Print_Finder(ssd, outfile63, 2);
+        check_finder2(spp);
         abort();
     }
 
@@ -2186,11 +2403,28 @@ static int clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
             printf("1469\n");
             if (empty_ppa == NULL){
                 printf("1719 empty page is NULL err\n");
-                // debug
-                empty_ppa = try_to_fix(ssd);
+                // 執行到這裡 表示系統現在很糟 快掛了
+                // 先重建finder1, finder2
+                printf("2366 try to fix system\n");
+                try_to_fix_v2(ssd);
+                // 重新在找一次
+                if (pg_iter->pg_type == PG_Sensitive){
+                    printf("2369\n");
+                    empty_ppa = Get_Empty_Page_For_Sensitive_LPN(ssd, pg_iter->Hot_level);
+                    printf("2370\n");
+                }else{
+                    printf("2372\n");
+                    empty_ppa = Get_Empty_Page_For_General_LPN(ssd, pg_iter->Hot_level);
+                    printf("2374\n");
+                }
+                
                 if (empty_ppa == NULL){
                     empty_ppa = use_op_space_to_force_get_empty_pg(ssd);
                 }
+            }
+            if (empty_ppa == NULL){
+                printf("2384 err\n");
+                abort();
             }
             gc_write_page(ssd, ppa, empty_ppa, pg_iter->Hot_level, pg_iter->LPN_frequency);
             printf("1471\n");
@@ -2739,8 +2973,22 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
             printf("no empty page\n");
             printf("Free Block %d, Free Page %lu, Valid Page %lu, Invalid Page %lu\n",Free_Block_Management->Queue_Size, Free_Page, Valid_Page, Invalid_Page);
             
-            empty_ppa = try_to_fix(ssd);
-            if (empty_ppa == NULL){
+            // 執行到這裡 表示系統現在很糟 快掛了
+            // 先重建finder1, finder2
+            printf("2936 try to fix system\n");
+            try_to_fix_v2(ssd);
+            // 重新在找一次
+            if (check == 1){
+                printf("2940\n");
+                empty_ppa = Get_Empty_Page_For_Sensitive_LPN(ssd, New_Hot_Level);
+                printf("2942\n");
+            }else{
+                printf("2944\n");
+                empty_ppa = Get_Empty_Page_For_General_LPN(ssd, New_Hot_Level);
+                printf("2946\n");
+            }
+                
+             if (empty_ppa == NULL){
                 empty_ppa = use_op_space_to_force_get_empty_pg(ssd);
             }
 
@@ -2901,6 +3149,8 @@ static void *ftl_thread(void *arg)
     outfile55 = fopen(fileName55, "wb");
     outfile56 = fopen(fileName56, "wb");
     outfile59 = fopen(fileName59, "wb");
+    outfile62 = fopen(fileName62, "wb");
+    outfile63 = fopen(fileName63, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -3046,6 +3296,8 @@ static void *ftl_thread(void *arg)
     fclose(outfile55);
     fclose(outfile56);
     fclose(outfile59);
+    fclose(outfile62);
+    fclose(outfile63);
 
     return NULL;
 }
