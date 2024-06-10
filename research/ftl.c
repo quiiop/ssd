@@ -72,6 +72,7 @@ const char* fileName63 = "68_final_finder2.txt";
 const char* fileName64 = "68_test_try_to_fix_finder1.txt";
 const char* fileName65 = "68_test_try_to_fix_finder2.txt";
 const char* fileName66 = "68_fix_system_record.txt";
+const char* fileName67 = "69_setting_blk.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -141,6 +142,7 @@ FILE *outfile63 = NULL;
 FILE *outfile64 = NULL;
 FILE *outfile65 = NULL;
 FILE *outfile66 = NULL;
+FILE *outfile67 = NULL;
 //#define FEMU_DEBUG_FTL
 
 //static bool wp_2 = false;
@@ -774,7 +776,7 @@ static void show_info(struct nand_block blk)
     fclose(outfile60);
 }*/
 
-static void test_valid_page(struct ssdparams *spp, struct nand_block *blk)
+/*static void test_valid_page(struct ssdparams *spp, struct nand_block *blk)
 {
     for (int n=0; n<spp->subblks_per_blk; n++){
         struct nand_subblock *sublk = &blk->subblk[n];
@@ -786,9 +788,9 @@ static void test_valid_page(struct ssdparams *spp, struct nand_block *blk)
             pg->status = PG_VALID;
         }
     }
-}
+}*/
 
-static void test_invalid_page(struct ssdparams *spp, struct nand_block *blk)
+/*static void test_invalid_page(struct ssdparams *spp, struct nand_block *blk)
 {
     int cnt1 = spp->subblks_per_blk /2;
     int cnt2 = spp->pgs_per_subblk /2;
@@ -802,11 +804,11 @@ static void test_invalid_page(struct ssdparams *spp, struct nand_block *blk)
             pg->status = PG_INVALID;
         }
     }
-}
+}*/
 
-static void test_record_blk(struct ssdparams *spp, struct nand_block *blk)
+/*static void test_record_blk(struct ssdparams *spp, struct nand_block *blk)
 {
-    fprintf(outfile61, "blk %ld\n", blk->blk);
+    fprintf(outfile61, "blk %ld\n", blk->id);
     
     for (int n=0; n<spp->subblks_per_blk; n++){
         struct nand_subblock *sublk = &blk->subblk[n];
@@ -814,7 +816,7 @@ static void test_record_blk(struct ssdparams *spp, struct nand_block *blk)
     }
 
     fprintf(outfile61, "===================\n");
-}
+}*/
 
 /*static void test_op_space_2(struct ssd *ssd)
 {
@@ -850,7 +852,7 @@ static void test_record_blk(struct ssdparams *spp, struct nand_block *blk)
     fclose(outfile61);
 }*/
 
-static void test_try_to_fix_v2(struct ssd *ssd)
+/*static void test_try_to_fix_v2(struct ssd *ssd)
 {
     outfile61 = fopen(fileName61, "wb");
     outfile64 = fopen(fileName64, "wb");
@@ -879,7 +881,7 @@ static void test_try_to_fix_v2(struct ssd *ssd)
     fclose(outfile61);
     fclose(outfile64);
     fclose(outfile65);
-}
+}*/
 
 void ssd_init(FemuCtrl *n)
 {
@@ -937,7 +939,7 @@ void ssd_init(FemuCtrl *n)
     // test_op_space_2(ssd);
     // test_op_space(ssd);
 
-    test_try_to_fix_v2(ssd);
+    //test_try_to_fix_v2(ssd);
     qemu_thread_create(&ssd->ftl_thread, "FEMU-FTL-Thread", ftl_thread, n,
                        QEMU_THREAD_JOINABLE);
 }
@@ -2023,8 +2025,10 @@ static void setting_blk(struct ssd *ssd, struct nand_block *blk)
     int blk_epc = 0; 
 
     // 處理block裡的sublk
+    fprintf(outfile67, "blk %ld\n", blk->id);
     for (int n=0; n<spp->subblks_per_blk; n++){
         struct nand_subblock *sublk = &blk->subblk[n];
+
         reset_sublk(sublk, spp);
 
         for (int m=0; m<spp->pgs_per_subblk; m++){
@@ -2064,6 +2068,9 @@ static void setting_blk(struct ssd *ssd, struct nand_block *blk)
         if (thres >= 2){
             sublk->was_victim = SUBLK_VICTIM;
             victim_sublk_cnt++;
+            fprintf(outfile67, "sublk %ld : ipc %d, vpc %d, epc %d, type = victim\n", sublk->sublk, sublk->ipc, sublk->vpc, sublk->epc);
+        }else{
+            fprintf(outfile67, "sublk %ld : ipc %d, vpc %d, epc %d, type = no victim\n", sublk->sublk, sublk->ipc, sublk->vpc, sublk->epc);
         }
 
         if (sublk->ipc >0 || sublk->vpc>0){
@@ -2074,11 +2081,15 @@ static void setting_blk(struct ssd *ssd, struct nand_block *blk)
     // 處理blk
     if (blk_epc == (spp->subblks_per_blk * spp->pgs_per_subblk)){
         Push(Free_Block_Management, blk);
+        fprintf(outfile67, "blk %ld : blk push Free Block Management\n", blk->id);
     }else{
         Add_blk_to_finder1(victim_sublk_cnt, blk);
+        fprintf(outfile67, "blk %ld : Finder1 pos %d\n", blk->id, blk->In_Finder1_Position);
+
         Add_blk_to_finder2(hot_level, blk);
+        fprintf(outfile67, "blk %ld : Finder2 pos %d\n", blk->id, blk->In_Finder2_Position);
     }
-    
+    fprintf(outfile67, "=========================\n");
 }
 
 static void try_to_fix_v2(struct ssd *ssd)
@@ -2091,6 +2102,7 @@ static void try_to_fix_v2(struct ssd *ssd)
     restart_create_finder1();
     restart_create_finder2();
     restart_queue();
+    outfile67 = fopen(fileName67, "wb");
 
     struct ppa *ppa = malloc(sizeof(struct ppa));
     for (int ch = 0; ch < spp->nchs; ch++) {
@@ -2111,6 +2123,7 @@ static void try_to_fix_v2(struct ssd *ssd)
         }
     }
     fclose(outfile66);
+    fclose(outfile67);
 }
 
 // 這是我最後的波紋急走 吃老衲一招 
@@ -2419,6 +2432,7 @@ static int clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
                 }
                 
                 if (empty_ppa == NULL){
+                    printf("use op space \n");
                     empty_ppa = use_op_space_to_force_get_empty_pg(ssd);
                 }
             }
@@ -2989,6 +3003,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
             }
                 
              if (empty_ppa == NULL){
+                printf("use op space \n");
                 empty_ppa = use_op_space_to_force_get_empty_pg(ssd);
             }
 
@@ -3166,14 +3181,14 @@ static void *ftl_thread(void *arg)
     }
 
     while (1) {
-        for (i = 1; i <= n->num_poller; i++) {
+        for (i = 1; i <= n->num_poller; i++){
             printf("2264\n");
             if (!ssd->to_ftl[i] || !femu_ring_count(ssd->to_ftl[i]))
                 continue;
-            printf("2267\n");
+            //printf("2267\n");
 
             rc = femu_ring_dequeue(ssd->to_ftl[i], (void *)&req, 1);
-            printf("2270\n");
+            //printf("2270\n");
             fprintf(outfile10, "before rc = %d\n", rc);
             
             if (rc != 1) {
@@ -3183,7 +3198,7 @@ static void *ftl_thread(void *arg)
 
             ftl_assert(req);
             
-            printf("2276\n");
+            //printf("2276\n");
             switch (req->cmd.opcode) {
             case NVME_CMD_WRITE:
                 printf("2278\n");
