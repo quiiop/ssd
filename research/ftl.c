@@ -59,6 +59,7 @@ const char* fileName50 = "gc_blk_cnt.txt";
 const char* fileName51 = "write_node.txt";
 const char* fileName52 = "trim_node.txt";
 const char* fileName53 = "max_node.txt";
+const char* fileName54 = "611_lba_record.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -115,6 +116,7 @@ FILE *outfile50 = NULL;
 FILE *outfile51 = NULL;
 FILE *outfile52 = NULL;
 FILE *outfile53 = NULL;
+FILE *outfile54 = NULL;
 //#define FEMU_DEBUG_FTL
 
 //static bool wp_2 = false;
@@ -2014,7 +2016,8 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     printf("1968\n");
     uint64_t start_lpn = lba / spp->secs_per_pg;
     uint64_t end_lpn = (lba + len - 1) / spp->secs_per_pg;
-    //fprintf(outfile32, "start= %lu, end= %lu\n", start_lpn, end_lpn);
+    fprintf(outfile54, "slba= %ld, len= %d, start= %lu, end= %lu\n", req->slba, len, start_lpn, end_lpn);
+    
     struct ppa ppa;
     uint64_t lpn;
     uint64_t curlat = 0, maxlat = 0;
@@ -2320,6 +2323,7 @@ static void *ftl_thread(void *arg)
     outfile51 = fopen(fileName51, "wb");
     outfile52 = fopen(fileName52, "wb");
     outfile53 = fopen(fileName53, "wb");
+    outfile54 = fopen(fileName54, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -2461,6 +2465,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile51);
     fclose(outfile52);
     fclose(outfile53);
+    fclose(outfile54);
 
     return NULL;
 }
