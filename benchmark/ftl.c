@@ -17,6 +17,7 @@ const char* fileName48 = "ssd_read_lat.txt";
 const char* fileName51 = "write_node.txt";
 const char* fileName62 = "61_blk_gc_cnt.txt";
 const char* fileName63 = "lba_record.txt";
+const char* fileName64 = "611_lba_record.txt";
 
 FILE *outfile29 = NULL;
 FILE *outfile30 = NULL;
@@ -33,12 +34,13 @@ FILE *outfile48 = NULL;
 FILE *outfile51 = NULL;
 FILE *outfile62 = NULL;
 FILE *outfile63 = NULL;
+FILE *outfile64 = NULL;
 
 unsigned int max_lba = 0;
 static void *ftl_thread(void *arg);
 
-static unsigned long boundary_1 = 2359293*512; 
-static unsigned long boundary_2 = 3932155*512;
+static unsigned long boundary_1 = 750000;
+static unsigned long boundary_2 = 1250000;
 
 static inline bool should_gc(struct ssd *ssd)
 {
@@ -939,6 +941,8 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     uint64_t curlat = 0, maxlat = 0;
     int r;
 
+    fprintf(outfile64, "slba= %ld, len= %d, start_lpn= %ld, end_lpn= %ld\n", req->slba, len, start_lpn, end_lpn);
+
     int check = 0;
     struct ppa *secure_deletion_table = malloc(sizeof(struct ppa) * (end_lpn-start_lpn+1));
     int sensitive_lpn_count = 0;
@@ -1099,6 +1103,7 @@ static void *ftl_thread(void *arg)
     outfile51 = fopen(fileName51, "wb");
     outfile62 = fopen(fileName62, "wb");
     outfile63 = fopen(fileName63, "wb");
+    outfile64 = fopen(fileName64, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -1166,6 +1171,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile51);
     fclose(outfile62);
     fclose(outfile63);
+    fclose(outfile64);
 
     return NULL;
 }
