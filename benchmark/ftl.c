@@ -18,6 +18,8 @@ const char* fileName51 = "write_node.txt";
 const char* fileName62 = "61_blk_gc_cnt.txt";
 const char* fileName63 = "lba_record.txt";
 const char* fileName64 = "611_lba_record.txt";
+const char* fileName65 = "write_leveling_record.txt";
+
 
 FILE *outfile29 = NULL;
 FILE *outfile30 = NULL;
@@ -35,6 +37,7 @@ FILE *outfile51 = NULL;
 FILE *outfile62 = NULL;
 FILE *outfile63 = NULL;
 FILE *outfile64 = NULL;
+FILE *outfile65 = NULL;
 
 unsigned int max_lba = 0;
 static void *ftl_thread(void *arg);
@@ -749,6 +752,8 @@ static void clean_one_block(struct ssd *ssd, struct ppa *ppa)
     fprintf(outfile33, "%f\n", n);
     fprintf(outfile34, "%d %d\n", blk->vpc, blk->ipc);
 
+    fprintf(outfile65, "%d %d %d %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl, ppa->g.blk);
+
     for (int pg = 0; pg < spp->pgs_per_blk; pg++) {
         ppa->g.pg = pg;
         pg_iter = get_pg(ssd, ppa);
@@ -1104,6 +1109,7 @@ static void *ftl_thread(void *arg)
     outfile62 = fopen(fileName62, "wb");
     outfile63 = fopen(fileName63, "wb");
     outfile64 = fopen(fileName64, "wb");
+    outfile65 = fopen(fileName65, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -1172,6 +1178,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile62);
     fclose(outfile63);
     fclose(outfile64);
+    fclose(outfile65);
 
     return NULL;
 }
