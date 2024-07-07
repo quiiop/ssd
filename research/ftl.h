@@ -142,6 +142,7 @@ struct nand_subblock { /* kuo */
     int was_victim; // sublk是否符合GC的條件
     int Current_Hot_Level; // sublk現在Hot Level
     uint64_t current_page_id;// 現在在使用哪個Page
+    int use_cnt;
 
     uint64_t ch;
     uint64_t lun;

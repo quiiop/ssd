@@ -60,6 +60,7 @@ const char* fileName51 = "write_node.txt";
 const char* fileName52 = "trim_node.txt";
 const char* fileName53 = "max_node.txt";
 const char* fileName54 = "611_lba_record.txt";
+const char* fileName55 = "write_leveling_record.txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -117,6 +118,7 @@ FILE *outfile51 = NULL;
 FILE *outfile52 = NULL;
 FILE *outfile53 = NULL;
 FILE *outfile54 = NULL;
+FILE *outfile55 = NULL;
 //#define FEMU_DEBUG_FTL
 
 //static bool wp_2 = false;
@@ -556,6 +558,7 @@ static void ssd_init_nand_subblk(struct nand_subblock *subblk, struct ssdparams 
     subblk->was_victim = SUBLK_NOT_VICTIM;
     subblk->Current_Hot_Level = SUBLK_NOT_IN_FINDER2;
     subblk->current_page_id = 0;
+    subblk->use_cnt = 0;
     
     for (uint64_t i = 0; i < subblk->npgs; i++) {
         ssd_init_nand_page(&subblk->pg[i], spp);
@@ -1364,6 +1367,8 @@ static struct nand_subblock *find(struct ssd *ssd, int Temp_Level)
     //struct ssdparams *spp = &ssd->sp;
     struct node *current = finder2->list[Temp_Level].head;
     struct ssdparams *spp = &ssd->sp;
+    struct nand_subblock *sublk = NULL;
+    int min_use_cnt = -1;
 
     if (current == NULL){
         // printf("current NULL\n");
@@ -1371,14 +1376,24 @@ static struct nand_subblock *find(struct ssd *ssd, int Temp_Level)
     }else{
         for (current=finder2->list[Temp_Level].head; current->next != NULL; current=current->next){
             struct nand_block *blk = current->blk;
+            
             for (int i=0; i<spp->pgs_per_subblk; i++){
                 if (blk->subblk[i].epc != 0){
+                    if (min_use_cnt == -1 || min_use_cnt > blk->subblk[i].use_cnt){
+                        min_use_cnt = blk->subblk[i].use_cnt;
+                        sublk = &blk->subblk[i];
+                    }
                     // printf("find sublk\n");
-                    return &blk->subblk[i];
+                    // return &blk->subblk[i];
+                    break;
                 }
             }
         }
-        // printf("Not find\n");
+        if (sublk != NULL){
+            return sublk;
+        }
+        
+        printf("Not find\n");
         return NULL;
     }
 }
@@ -1458,42 +1473,59 @@ static struct nand_block *find_blk_from_Finder1(struct ssd *ssd)
     // printf("1250\n");
     struct ssdparams *spp = &ssd->sp;
     int nlinks = spp->subblks_per_blk; //16
-    struct nand_block *blk = NULL;
     double Max = 0;
     int is_find_blk = 0;
+    int min_use_cnt = -1;
 
+    // linked list
     for(int i=nlinks-1; i>=0; i--){
         // printf("1254\n");
         struct link *list = &finder->list[i];
         // printf("1256\n");
         if (list->head!=NULL){
             struct node *current;
+            struct nand_block *blk = NULL;
+            
+            // block
             for (current=list->head; current->next!=NULL; current=current->next){
                 // printf("1259\n");
                 struct nand_block *target_block = current->blk;
                 is_find_blk = 0;
-                // printf("1261\n");
+                
+                // sub-block
                 for (int k=0; k<spp->subblks_per_blk; k++){
                     struct nand_subblock *sublk = &(target_block->subblk[k]);
+                    
                     if (sublk->was_full != SUBLK_FULL){
+                        // page
                         for (int k2=0; k2<spp->pgs_per_subblk; k2++){
                             struct nand_page *pg = &sublk->pg[k2];
                             if (pg->status == PG_FREE){
                                 double n = Calculate_GC_Sublk_2(sublk);
                                 if (n > Max || n == Max){
-                                    blk = target_block;
                                     Max = n;
                                     is_find_blk = 1;
+
+                                    if (min_use_cnt == -1){
+                                        min_use_cnt = sublk->use_cnt;
+                                        blk = target_block;
+                                    }
+                                    if (min_use_cnt > sublk->use_cnt){
+                                        min_use_cnt = sublk->use_cnt;
+                                        blk = target_block;
+                                    }
                                 }
                                 break;
                             }
                         }
                     }
+                    
                     if (is_find_blk == 1){
                         break;
                     }
                 }
             }
+
             if (blk!=NULL){
                 return blk;
             }
@@ -1606,6 +1638,10 @@ static int clean_one_subblock(struct ssd *ssd, struct ppa *ppa, NvmeRequest *req
     struct ssdparams *spp = &ssd->sp;
     struct nand_page *pg_iter = NULL;
     int cnt = 0; //計算sublk有多少valid pg
+
+    struct nand_subblock *sublk = get_subblk(ssd, ppa);
+    sublk->use_cnt++;
+    fprintf(outfile55,"%d %d %d %d %d\n", ppa->g.ch, ppa->g.lun, ppa->g.pl, ppa->g.blk, ppa->g.subblk);
 
     for (int pg = 0; pg < spp->pgs_per_subblk; pg++){
         ppa->g.pg = pg;
@@ -2324,6 +2360,7 @@ static void *ftl_thread(void *arg)
     outfile52 = fopen(fileName52, "wb");
     outfile53 = fopen(fileName53, "wb");
     outfile54 = fopen(fileName54, "wb");
+    outfile55 = fopen(fileName55, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -2466,6 +2503,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile52);
     fclose(outfile53);
     fclose(outfile54);
+    fclose(outfile55);
 
     return NULL;
 }
