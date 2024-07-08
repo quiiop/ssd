@@ -35,7 +35,7 @@ const char* fileName28 = "Workload_Lba.txt";
 const char* fileName29 = "WA_Cnt_Record.txt";
 const char* fileName30 = "Write_Cnt_Record.txt";
 const char* fileName31 = "workload.txt";
-const char* fileName32 = "Test_Record.txt";
+const char* fileName32 = "GC_Test_Record.txt";
 const char* fileName33 = "space.txt";
 const char* fileName34 = "finder_record.txt";
 const char* fileName35 = "victim_sublk_record.txt";
@@ -61,6 +61,8 @@ const char* fileName52 = "trim_node.txt";
 const char* fileName53 = "max_node.txt";
 const char* fileName54 = "611_lba_record.txt";
 const char* fileName55 = "write_leveling_record.txt";
+
+const char* fileName56 = ".txt";
 
 FILE *outfile = NULL;
 FILE *outfile2 = NULL;
@@ -153,29 +155,19 @@ uint64_t current_block_cnt = 0;
 static uint64_t MAX_Frequency = 0;
 static uint64_t max_lba = 0;
 // static uint64_t Write_Lpn_Cnt = 0;
+static unsigned long long ssd_total_page = 0;
+static unsigned long long ssd_total_empty_page = 0;
 
-static inline bool should_gc_sublk(struct ssd *ssd)
+static int should_gc_sublk(struct ssd *ssd)
 {
-    /*
-    if (tt_ipc > ssd->sp.sublk_gc_thres_pgs){
-        return true;
-    }else{
-        return false;
-    }
-    */
-   /*當可用的Free Block數量 < 總Blk數 * GC_Threshold，做GC動作*/
-   //int GC_Threshold = 0.5;
-   //int GC_Threshold_Blk_Count = (ssd->sp.nchs * ssd->sp.blks_per_ch) * GC_Threshold;
-   // printf("Queue_Size = %d\n", Free_Block_Management->Queue_Size);
-   
-   //printf("120\n");
-   double threshold = 4096 * 0.5;
-   if (Free_Block_Management->Queue_Size < threshold){ //total 4096 blks
-        return true;
+   double threshold = ssd_total_page * 0.5;
+   if (ssd_total_empty_page < threshold){ 
+        fprintf(outfile32, "yes, total page %lld, total empty page %lld\n", ssd_total_page, ssd_total_empty_page);
+        return 1;
    }else{
-        return false;
+        fprintf(outfile32, "no, total page %lld, total empty page %lld\n", ssd_total_page, ssd_total_empty_page);
+        return 0;
    }
-   //printf("127\n");
 }
 
 static inline struct ppa get_maptbl_ent(struct ssd *ssd, uint64_t lpn)
@@ -543,6 +535,9 @@ static void ssd_init_nand_page(struct nand_page *pg, struct ssdparams *spp)
     pg->status = PG_FREE;
     pg->Hot_level = Hot_level_0;
     pg->pg_type = PG_Empty;
+
+    ssd_total_page++;
+    ssd_total_empty_page++;
 }
 
 static void ssd_init_nand_subblk(struct nand_subblock *subblk, struct ssdparams *spp, uint64_t ch_id, uint64_t lun_id, uint64_t pl_id, uint64_t blk_id, uint64_t sublk_id, FILE *outfile)
@@ -1165,6 +1160,8 @@ static void mark_page_valid(struct ssd *ssd, struct ppa *ppa)
     }
 
     Valid_Page++;
+    // 紀錄現在ssd empty page
+    ssd_total_empty_page--;
 
     /* 紀錄blk現在使用的sublk id */
     blk->current_sublk_id = ppa->g.subblk;
@@ -1241,6 +1238,7 @@ static void mark_subblock_free(struct ssd *ssd, struct ppa *ppa)
         pg->Hot_level = Hot_level_0;
         pg->pg_type = PG_Empty;
         Free_Page++;
+        ssd_total_empty_page++;
     }
     printf("1196\n");
     struct nand_block *blk = get_blk(ssd, ppa);
@@ -1689,10 +1687,10 @@ static int do_gc(struct ssd *ssd, bool force, NvmeRequest *req)
     victim_blk = Get_Victim_Block(ssd);
     if (victim_blk == NULL){
         //printf("No Victim Blk\n");
-        //fprintf(outfile32, "No Victim Blk\n");
+        fprintf(outfile32, "No Victim Blk, total page %lld, total empty page %lld\n", ssd_total_page, ssd_total_empty_page);
         return -1;
     }else{
-        //fprintf(outfile32, "GC blk= %lu\n", victim_blk->blk);
+        fprintf(outfile32, "GC blk= %lu\n", victim_blk->blk);
     }
 
     ppa.g.ch = victim_blk->ch;
