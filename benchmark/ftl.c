@@ -19,6 +19,7 @@ const char* fileName62 = "61_blk_gc_cnt.txt";
 const char* fileName63 = "lba_record.txt";
 const char* fileName64 = "611_lba_record.txt";
 const char* fileName65 = "write_leveling_record.txt";
+const char* fileName66 = "max_lba.txt";
 
 
 FILE *outfile29 = NULL;
@@ -38,12 +39,17 @@ FILE *outfile62 = NULL;
 FILE *outfile63 = NULL;
 FILE *outfile64 = NULL;
 FILE *outfile65 = NULL;
+FILE *outfile66 = NULL;
 
-unsigned int max_lba = 0;
 static void *ftl_thread(void *arg);
 
-static unsigned long boundary_1 = 750000;
-static unsigned long boundary_2 = 1250000;
+//static unsigned long boundary_1 = 750000; // 1G
+//static unsigned long boundary_2 = 1250000; // 1G
+
+static unsigned long boundary_1 = 750000*5; // 5G
+static unsigned long boundary_2 = 1250000*5; // 5G
+
+unsigned long long max_lba = 0;
 
 static inline bool should_gc(struct ssd *ssd)
 {
@@ -280,7 +286,7 @@ static void ssd_init_params(struct ssdparams *spp)
     spp->secsz = 512;
     spp->secs_per_pg = 8;
     spp->pgs_per_blk = 256;
-    spp->blks_per_pl = 64; /* 16GB */
+    spp->blks_per_pl = 1024; /* 64GB */
     spp->pls_per_lun = 1;
     spp->luns_per_ch = 8;
     spp->nchs = 8;
@@ -934,7 +940,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     uint64_t lba = req->slba;
     if (max_lba < lba){
         max_lba = lba;
-        fprintf(outfile63, "max lba = %d\n", max_lba);
+        fprintf(outfile66, "%lld\n", max_lba);
     }
 
     struct ssdparams *spp = &ssd->sp;
@@ -946,7 +952,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     uint64_t curlat = 0, maxlat = 0;
     int r;
 
-    fprintf(outfile64, "slba= %ld, len= %d, start_lpn= %ld, end_lpn= %ld\n", req->slba, len, start_lpn, end_lpn);
+    //fprintf(outfile64, "slba= %ld, len= %d, start_lpn= %ld, end_lpn= %ld\n", req->slba, len, start_lpn, end_lpn);
 
     int check = 0;
     struct ppa *secure_deletion_table = malloc(sizeof(struct ppa) * (end_lpn-start_lpn+1));
@@ -965,7 +971,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     }
 
     fprintf(outfile30, "%lu\n", (end_lpn-start_lpn+1));
-    printf("lba %ld\n", lba);
+    // printf("lba %ld\n", lba);
     if (boundary_1<=lba && lba<=boundary_2){
         printf("961\n");
         check = 1;
@@ -1110,6 +1116,7 @@ static void *ftl_thread(void *arg)
     outfile63 = fopen(fileName63, "wb");
     outfile64 = fopen(fileName64, "wb");
     outfile65 = fopen(fileName65, "wb");
+    outfile66 = fopen(fileName66, "wb");
 
     while (!*(ssd->dataplane_started_ptr)) {
         usleep(100000);
@@ -1179,6 +1186,7 @@ static void *ftl_thread(void *arg)
     fclose(outfile63);
     fclose(outfile64);
     fclose(outfile65);
+    fclose(outfile66);
 
     return NULL;
 }
