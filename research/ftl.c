@@ -480,9 +480,9 @@ static void ssd_init_params(struct ssdparams *spp)
     spp->luns_per_ch = 8;//8->2
     spp->nchs = 8;//8->4
 
-    spp->pg_rd_lat = NAND_READ_LATENCY;
-    spp->pg_wr_lat = NAND_PROG_LATENCY;
-    spp->blk_er_lat = NAND_ERASE_LATENCY;
+    spp->pg_rd_lat = 700;
+    spp->pg_wr_lat = 60;
+    spp->blk_er_lat = 3500;
     spp->ch_xfer_lat = 0;
 
     /* calculated values */
@@ -2044,7 +2044,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
         fprintf(outfile53, "max_lba %ld\n", max_lba);
     }
 
-    fprintf(outfile51, "%lu\n", lba);
+    // fprintf(outfile51, "%lu\n", lba);
     struct ssdparams *spp = &ssd->sp;
     int len = req->nlb;
     //fprintf(outfile39, "%lu\n", lba);
@@ -2052,7 +2052,7 @@ static uint64_t ssd_write(struct ssd *ssd, NvmeRequest *req)
     printf("1968\n");
     uint64_t start_lpn = lba / spp->secs_per_pg;
     uint64_t end_lpn = (lba + len - 1) / spp->secs_per_pg;
-    fprintf(outfile54, "slba= %ld, len= %d, start= %lu, end= %lu\n", req->slba, len, start_lpn, end_lpn);
+    // fprintf(outfile54, "slba= %ld, len= %d, start= %lu, end= %lu\n", req->slba, len, start_lpn, end_lpn);
     
     struct ppa ppa;
     uint64_t lpn;
