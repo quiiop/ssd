@@ -480,9 +480,9 @@ static void ssd_init_params(struct ssdparams *spp)
     spp->luns_per_ch = 8;//8->2
     spp->nchs = 8;//8->4
 
-    spp->pg_rd_lat = 700;
-    spp->pg_wr_lat = 60;
-    spp->blk_er_lat = 3500;
+    spp->pg_rd_lat = 40000;
+    spp->pg_wr_lat = 350000;
+    spp->blk_er_lat = 3500000;
     spp->ch_xfer_lat = 0;
 
     /* calculated values */
